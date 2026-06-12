@@ -142,6 +142,13 @@ function buildDryHayDecision(
   const riskWithoutTed = cutStart && baleWithoutTed ? labelRisk(forecastBetween(forecast, cutStart, baleWithoutTed), baleWithoutTed) : "High";
   const riskWithTed = cutStart && baleWithTed ? labelRisk(forecastBetween(forecast, cutStart, baleWithTed), baleWithTed) : "High";
 
+  const primaryBaleTime = teddingRecommended && baleWithTed ? baleWithTed : baleWithoutTed;
+  const rakeTime = cutStart && primaryBaleTime ? computeRakeTime(cutStart, primaryBaleTime, dryingHours, false, input.weather.hourly, tedStart) : null;
+  const timelineBaleTime =
+    rakeTime && primaryBaleTime && Math.abs(primaryBaleTime.getTime() - rakeTime.getTime()) < 36e5
+      ? snapOperationTime(addHours(primaryBaleTime, 1))
+      : primaryBaleTime;
+
   return {
     score: finalScore,
     dryingHours,
@@ -163,11 +170,10 @@ function buildDryHayDecision(
     timeline: {
       cut: cutStart ? formatDateTime(cutStart) : "No valid cut window in the next 7 days",
       ted: tedStart && tedEnd ? `${formatDateTime(tedStart)} - ${formatTime(tedEnd)} (optional)` : "Wait until a valid cut window appears",
-      bale: teddingRecommended && baleWithTed
-        ? formatDateTime(baleWithTed)
-        : baleWithoutTed
-          ? formatDateTime(baleWithoutTed)
-          : "No bale window until a valid cut window appears"
+      rake: rakeTime ? formatDateTime(rakeTime) : "No rake window until a valid cut window appears",
+      bale: timelineBaleTime
+        ? formatDateTime(timelineBaleTime)
+        : "No bale window until a valid cut window appears"
     },
     comparison: {
       withTedding: {
@@ -254,6 +260,11 @@ function buildBaleageDecision(
   const baleTime = cutStart ? snapOperationTime(addHours(cutStart, dryingHours)) : null;
   const wrapEnd = baleTime ? addHours(baleTime, 6) : null;
   const risk = cutStart && baleTime ? labelRisk(forecastBetween(forecast, cutStart, baleTime), baleTime) : "High";
+  const rakeTime = cutStart && baleTime ? computeRakeTime(cutStart, baleTime, dryingHours, true, input.weather.hourly) : null;
+  const timelineBaleTime =
+    rakeTime && baleTime && Math.abs(baleTime.getTime() - rakeTime.getTime()) < 36e5
+      ? snapOperationTime(addHours(baleTime, 1))
+      : baleTime;
 
   return {
     score: finalScore,
@@ -269,7 +280,8 @@ function buildBaleageDecision(
     },
     timeline: {
       cut: cutStart ? formatDateTime(cutStart) : "No valid cut window in the next 7 days",
-      bale: baleTime ? formatDateTime(baleTime) : "No bale window until a valid cut window appears",
+      rake: rakeTime ? formatDateTime(rakeTime) : "No rake window until a valid cut window appears",
+      bale: timelineBaleTime ? formatDateTime(timelineBaleTime) : "No bale window until a valid cut window appears",
       wrap: wrapEnd ? `${formatDateTime(baleTime!)} - ${formatTime(wrapEnd)}` : "No wrap window until a valid cut window appears"
     },
     comparison: {
@@ -445,11 +457,10 @@ function evaluateCandidateWindow(
   const fieldRecentlyWet =
     recent.precipitationLast24h > 0.5 &&
     recent.hoursSinceLastRain !== null &&
-    recent.hoursSinceLastRain < 12 &&
-    hoursBetween(now, start) < 12;
+    recent.hoursSinceLastRain < 8 &&
+    hoursBetween(now, start) < 8;
 
   if (!isOperationHour(start)) return null;
-  if (rainFirst24 >= 0.1) return null;
   if (rainBeforeDryingComplete >= 0.25) return null;
   if (metrics.dryingHours < 24) return null;
   if (humidHours > 12) return null;
@@ -460,6 +471,7 @@ function evaluateCandidateWindow(
   const risk = labelRisk(curingHours, end);
   if (risk === "High") return null;
 
+  const earlyRainPenalty = rainFirst24 >= 0.1 ? clamp(Math.round(rainFirst24 * 30), 0, 20) : 0;
   const marginBonus = Number.isFinite(dryingMargin) ? clamp(dryingMargin, 0, 18) * 1.6 : 28;
   const noRainBonus = rain.amount < 0.02 && rain.maxProbability < 30 ? 18 : 0;
   const humidityBonus = metrics.averageHumidity < 75 ? 10 : metrics.averageHumidity < 80 ? 4 : 0;
@@ -477,7 +489,8 @@ function evaluateCandidateWindow(
       rain.penalty * 1.6 -
       dew * 1.5 -
       timingPenalty -
-      offHoursPenalty,
+      offHoursPenalty -
+      earlyRainPenalty,
     0,
     100
   );
@@ -553,6 +566,30 @@ function buildReasons(
   if (dewPenalty > 5) reasons.push("Overnight dew risk may slow curing");
   if (score < 70 && hasCurrentWindow) reasons.push(bestWindowMessage);
   return reasons.slice(0, 4);
+}
+
+function computeRakeTime(cutStart: Date, baleTime: Date | null, dryingHours: number, isBaleage: boolean, hourly?: HourlyWeather[], tedTime?: Date | null): Date | null {
+  if (!baleTime) return null;
+  const minDryingForRake = isBaleage ? 4 : 8;
+  const earliestRake = addHours(cutStart, minDryingForRake);
+
+  // Rake same day as baling, at 10am
+  const baleDay = new Date(baleTime);
+  baleDay.setHours(10, 0, 0, 0);
+  let rake = snapOperationTime(baleDay, hourly);
+
+  if (rake < earliestRake) {
+    rake = snapOperationTime(earliestRake, hourly);
+  }
+
+  // Rake must be at least 24h after tedding
+  if (tedTime && rake < addHours(tedTime, 24)) {
+    const dayAfterTed = snapOperationTime(addHours(tedTime, 24), hourly);
+    if (dayAfterTed < baleTime) return dayAfterTed;
+    return snapOperationTime(addHours(baleTime, -2), hourly);
+  }
+
+  return rake;
 }
 
 function evaluateBaleageCandidateWindow(

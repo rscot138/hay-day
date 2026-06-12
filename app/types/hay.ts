@@ -63,6 +63,7 @@ export type HayDecision = {
   timeline: {
     cut: string;
     ted?: string;
+    rake: string;
     bale: string;
     wrap?: string;
   };

@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronRight,
   Clock,
+  Cloud,
   CloudRain,
   Compass,
   Loader2,
   MapPin,
+  Moon,
   RefreshCw,
   Scissors,
   Settings,
@@ -23,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { FieldSettings, HayDecision, WeatherSummary } from "@/app/types/hay";
+import { FieldSettings, HayDecision, HourlyWeather, WeatherSummary } from "@/app/types/hay";
 import { cn } from "@/app/lib/utils";
 
 type ApiState =
@@ -433,18 +436,74 @@ function BreakdownScreen({ decision, weather }: { decision: HayDecision; weather
   );
 }
 
+function formatHourTime(date: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function extractStartTime(range: string): string | null {
+  if (range.startsWith("No") || range.startsWith("Wait") || range.startsWith("Not")) return null;
+  return range.split(" - ")[0];
+}
+
+function findHourIndex(hours: HourlyWeather[], timeStr: string | null): number | null {
+  if (!timeStr) return null;
+  for (let i = 0; i < hours.length; i++) {
+    if (formatHourTime(new Date(hours[i].time)) === timeStr) return i;
+  }
+  return null;
+}
+
 function TimelineScreen({ decision, weather }: { decision: HayDecision; weather: WeatherSummary }) {
   const isBaleage = decision.harvestMethod === "baleage";
   const hours = weather.hourly.filter((hour) => new Date(hour.time) >= new Date()).slice(0, 168);
+
+  const markerIndices = useMemo(
+    () => ({
+      cut: findHourIndex(hours, decision.timeline.cut),
+      ted: !isBaleage ? findHourIndex(hours, extractStartTime(decision.tedding.window)) : null,
+      rake: findHourIndex(hours, decision.timeline.rake),
+      bale: findHourIndex(hours, decision.timeline.bale),
+      wrap: isBaleage ? findHourIndex(hours, decision.timeline.wrap ?? null) : null
+    }),
+    [hours, decision, isBaleage]
+  );
+
+  const dayGroups = useMemo(() => {
+    const groups: { date: Date; label: string; span: number }[] = [];
+    let currentDate: string | null = null;
+    hours.forEach((h) => {
+      const d = new Date(h.time);
+      const dateKey = d.toDateString();
+      if (dateKey !== currentDate) {
+        currentDate = dateKey;
+        groups.push({
+          date: d,
+          label: new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" }).format(d),
+          span: 0
+        });
+      }
+      groups[groups.length - 1].span++;
+    });
+    return groups;
+  }, [hours]);
+
   const markerTimes = isBaleage
     ? [
         { label: "CUT", time: decision.timeline.cut, className: "bg-primary text-primary-foreground" },
+        { label: "RAKE", time: decision.timeline.rake, className: "bg-amber-100 text-amber-800" },
         { label: "BALE", time: decision.timeline.bale, className: "bg-secondary text-secondary-foreground" },
         { label: "WRAP", time: decision.timeline.wrap || "N/A", className: "border border-dashed border-amber-600 bg-background text-amber-700" }
       ]
     : [
         { label: "CUT", time: decision.timeline.cut, className: "bg-primary text-primary-foreground" },
-        { label: "TED", time: decision.tedding.window, className: "border border-dashed border-primary bg-background text-primary" },
+        ...(decision.tedding.recommended
+          ? [{ label: "TED", time: decision.tedding.window, className: "border border-dashed border-primary bg-background text-primary" }]
+          : []),
+        { label: "RAKE", time: decision.timeline.rake, className: "bg-amber-100 text-amber-800" },
         { label: "BALE", time: decision.timeline.bale, className: "bg-secondary text-secondary-foreground" }
       ];
 
@@ -455,29 +514,96 @@ function TimelineScreen({ decision, weather }: { decision: HayDecision; weather:
           <CardTitle>Next 7 Days</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="timeline-scroll overflow-x-auto pb-3">
-            <div className="relative flex min-w-[1120px] gap-1">
-              {hours.map((hour) => {
-                const rain = hour.precipitationProbability >= 35 || hour.precipitationAmount > 0.01;
-                return (
-                  <div
-                    key={hour.time}
-                    className={cn(
-                      "flex h-32 w-10 shrink-0 flex-col justify-end rounded-md border p-1 text-[10px]",
-                      rain ? "bg-sky-100" : hour.sunFactor > 0.5 ? "bg-yellow-100" : "bg-card"
-                    )}
-                  >
-                    <div className="mb-auto text-center text-muted-foreground">{new Date(hour.time).getHours()}</div>
+          <div className="relative">
+            <div className="timeline-scroll overflow-x-auto pb-1">
+              <div className="min-w-[1120px]">
+                {/* Day headers */}
+                <div className="mb-1 flex gap-0.5">
+                  {dayGroups.map((group) => (
                     <div
-                      className="rounded-sm bg-primary/80"
-                      style={{ height: `${Math.max(8, hour.windSpeed * 3)}px` }}
-                      title={`${hour.windSpeed} mph wind`}
-                    />
-                    {rain ? <CloudRain className="mx-auto mt-1 h-3 w-3 text-sky-700" /> : <Sun className="mx-auto mt-1 h-3 w-3 text-yellow-700" />}
-                  </div>
-                );
-              })}
+                      key={group.date.toDateString()}
+                      className="shrink-0 text-center text-xs"
+                      style={{ width: group.span * 40 + (group.span - 1) * 2 }}
+                    >
+                      <div className="font-semibold">{group.label.split(",")[0]}</div>
+                      <div className="text-muted-foreground">
+                        {group.label.split(",")[1]?.trim()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Hour bars */}
+                <div className="flex gap-0.5">
+                  {hours.map((hour, i) => {
+                    const isRain = hour.precipitationProbability >= 35 || hour.precipitationAmount > 0.01;
+                    const isDrying = hour.dryingHour;
+                    const hourNum = new Date(hour.time).getHours();
+                    return (
+                      <div
+                        key={hour.time}
+                        className={cn(
+                          "relative flex h-32 w-10 shrink-0 flex-col justify-end rounded-md border p-1 text-[10px]",
+                          isRain
+                            ? "border-sky-200 bg-sky-100"
+                            : isDrying
+                              ? "border-yellow-200 bg-yellow-50"
+                              : "border-gray-200 bg-card"
+                        )}
+                        title={`${hour.temperature}°F, ${hour.windSpeed} mph wind, ${hour.relativeHumidity}% RH`}
+                      >
+                        <div className="mb-auto text-center text-muted-foreground">
+                          {hourNum === 0 ? "12a" : hourNum < 12 ? `${hourNum}a` : hourNum === 12 ? "12p" : `${hourNum - 12}p`}
+                        </div>
+                        <div
+                          className="rounded-sm bg-primary/80"
+                          style={{ height: `${Math.max(8, hour.windSpeed * 3)}px` }}
+                          title={`${hour.windSpeed} mph wind`}
+                        />
+                        {isRain ? (
+                          <CloudRain className="mx-auto mt-1 h-3 w-3 text-sky-700" />
+                        ) : isDrying ? (
+                          <Sun className="mx-auto mt-1 h-3 w-3 text-yellow-700" />
+                        ) : hourNum >= 7 && hourNum <= 19 ? (
+                          <Cloud className="mx-auto mt-1 h-3 w-3 text-gray-400" />
+                        ) : (
+                          <Moon className="mx-auto mt-1 h-3 w-3 text-slate-400" />
+                        )}
+                        {markerIndices.cut === i && (
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-primary px-1 text-[8px] font-bold text-primary-foreground">
+                            CUT
+                          </div>
+                        )}
+                        {!isBaleage && markerIndices.ted === i && (
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm border border-dashed border-primary bg-background px-1 text-[8px] font-bold text-primary">
+                            TED
+                          </div>
+                        )}
+                        {markerIndices.rake === i && (
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-amber-100 px-1 text-[8px] font-bold text-amber-800">
+                            RAKE
+                          </div>
+                        )}
+                        {markerIndices.bale === i && (
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-secondary px-1 text-[8px] font-bold text-secondary-foreground">
+                            BALE
+                          </div>
+                        )}
+                        {isBaleage && markerIndices.wrap === i && (
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm border border-dashed border-amber-600 bg-background px-1 text-[8px] font-bold text-amber-700">
+                            WRAP
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
+            {/* Scroll fade hint */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background via-background/80 to-transparent" />
+          </div>
+          <div className="mt-0.5 flex items-center justify-end gap-0.5 text-[10px] text-muted-foreground">
+            scroll <ChevronRight className="h-3 w-3" />
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {markerTimes.map((marker) => (
@@ -517,13 +643,13 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shovel className="h-5 w-5 text-primary" /> Tedding Detail
+              <Shovel className="h-5 w-5 text-primary" /> Tedding &amp; Raking
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xl font-semibold">{decision.tedding.message}</p>
             <p className="text-sm text-muted-foreground">
-              Tedding is never required here; it is a time-saving option when the crop needs more air before the bale window.
+              Tedding is never required — it is a time-saving option when weather windows are tight. But tedding causes leaf loss and crop damage, so skip it when conditions allow. Raking is always required to form windrows before baling.
             </p>
           </CardContent>
         </Card>
@@ -535,6 +661,7 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
           </CardHeader>
           <CardContent className="grid gap-3">
             <ActionRow icon={<Scissors className="h-4 w-4" />} label="Cut" value={decision.timeline.cut} />
+            <ActionRow icon={<Wind className="h-4 w-4" />} label="Rake" value={decision.timeline.rake} />
             <ActionRow icon={<Waves className="h-4 w-4" />} label="Bale" value={decision.timeline.bale} />
             <ActionRow icon={<Shield className="h-4 w-4" />} label="Wrap" value={decision.timeline.wrap || "Wrap immediately"} />
           </CardContent>
@@ -545,8 +672,9 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
             <CardTitle>Expected Benefit</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <ActionRow icon={<Clock className="h-4 w-4" />} label="Window" value={decision.tedding.window} />
+            <ActionRow icon={<Clock className="h-4 w-4" />} label="Tedding window" value={decision.tedding.window} />
             <ActionRow icon={<Wind className="h-4 w-4" />} label="Saved time" value={`~${decision.tedding.benefitHours} hours`} />
+            <ActionRow icon={<Wind className="h-4 w-4" />} label="Rake" value={decision.timeline.rake} />
             <ActionRow icon={<Waves className="h-4 w-4" />} label="With tedding" value={`${decision.comparison.withTedding.baleTime}, ${decision.comparison.withTedding.risk} risk`} />
             <ActionRow icon={<CloudRain className="h-4 w-4" />} label="Without" value={`${decision.comparison.withoutTedding.baleTime}, ${decision.comparison.withoutTedding.risk} risk`} muted />
           </CardContent>
