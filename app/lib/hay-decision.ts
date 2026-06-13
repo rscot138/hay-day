@@ -258,19 +258,19 @@ function buildBaleageDecision(
   const hasActionableCut = hasCurrentWindow || bestWindow.exists;
   const cutStart = hasCurrentWindow ? now : bestWindow.exists ? new Date(bestWindow.start) : null;
   const baleTime = cutStart ? snapOperationTime(addHours(cutStart, dryingHours)) : null;
-  const wrapEnd = baleTime ? addHours(baleTime, 6) : null;
   const risk = cutStart && baleTime ? labelRisk(forecastBetween(forecast, cutStart, baleTime), baleTime) : "High";
   const rakeTime = cutStart && baleTime ? computeRakeTime(cutStart, baleTime, dryingHours, true, input.weather.hourly) : null;
   const timelineBaleTime =
     rakeTime && baleTime && Math.abs(baleTime.getTime() - rakeTime.getTime()) < 36e5
       ? snapOperationTime(addHours(baleTime, 1))
       : baleTime;
+  const wrapEnd = timelineBaleTime ? addHours(timelineBaleTime, 6) : null;
 
   return {
     score: finalScore,
     dryingHours,
     recommendation: status,
-    reasons: buildBaleageReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, tooWet, overdryPenalty, hasCurrentWindow, bestWindow.exists),
+    reasons: buildBaleageReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, tooWet, overdryPenalty, hasCurrentWindow, bestWindow.exists, timelineBaleTime),
     bestWindow,
     tedding: {
       recommended: false,
@@ -282,7 +282,7 @@ function buildBaleageDecision(
       cut: cutStart ? formatDateTime(cutStart) : "No valid cut window in the next 7 days",
       rake: rakeTime ? formatDateTime(rakeTime) : "No rake window until a valid cut window appears",
       bale: timelineBaleTime ? formatDateTime(timelineBaleTime) : "No bale window until a valid cut window appears",
-      wrap: wrapEnd ? `${formatDateTime(baleTime!)} - ${formatTime(wrapEnd)}` : "No wrap window until a valid cut window appears"
+      wrap: timelineBaleTime && wrapEnd ? `${formatDateTime(timelineBaleTime)} - ${formatTime(wrapEnd)}` : "No wrap window until a valid cut window appears"
     },
     comparison: {
       withTedding: {
@@ -727,7 +727,8 @@ function buildBaleageReasons(
   tooWet: boolean,
   overdryPenalty: number,
   hasCurrentWindow: boolean,
-  hasBestWindow: boolean
+  hasBestWindow: boolean,
+  timelineBaleTime: Date | null
 ) {
   const reasons: string[] = [];
   if (tooWet) {
@@ -744,8 +745,14 @@ function buildBaleageReasons(
   if (overdryPenalty > 0) reasons.push("Drying estimate exceeds 48h — crop may over-dry for ideal baleage");
   if (drying.dryingHours >= 8) reasons.push("Adequate drying conditions for baleage wilting");
   else reasons.push("Drying hours are limited for reliable wilting");
-  if (rain.nextRainAt) reasons.push(`Rain possible around ${formatDateTime(new Date(rain.nextRainAt))} — rain after baling is OK if wrapped`);
-  else reasons.push("No meaningful rain showing during wilting");
+  if (rain.nextRainAt) {
+    const rainTime = new Date(rain.nextRainAt);
+    if (timelineBaleTime && rainTime > timelineBaleTime) {
+      reasons.push(`Rain possible around ${formatDateTime(rainTime)} — rain after baling is OK if wrapped`);
+    } else {
+      reasons.push(`Rain possible around ${formatDateTime(rainTime)} — minor rain during wilting is manageable`);
+    }
+  } else reasons.push("No meaningful rain showing during wilting");
   if (residualPenalty > 6) reasons.push("Moisture from recent rainfall is still present");
   if (score < 60 && hasCurrentWindow) reasons.push(bestWindowMessage);
   return reasons.slice(0, 4);
