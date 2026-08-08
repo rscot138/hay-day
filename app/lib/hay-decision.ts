@@ -110,9 +110,10 @@ function buildDryHayDecision(
   score: number
 ) {
   const dryingHours = estimateDryingHours(input.field.swathDensity, input.field.conditioning, dryingMetrics, residualPenalty, dewPenalty, "dry_hay");
+  const currentWindowStart = snapOperationTime(now, input.weather.hourly);
   const currentCutEvaluation = evaluateCandidateWindow(
     input.weather.hourly,
-    now,
+    currentWindowStart,
     dryingHours,
     input.weather.recent,
     now
@@ -132,7 +133,11 @@ function buildDryHayDecision(
       ? Math.min(score, 49)
       : 0;
   const hasActionableCut = hasCurrentWindow || bestWindow.exists;
-  const cutStart = hasCurrentWindow ? now : bestWindow.exists ? new Date(bestWindow.start) : null;
+  const cutStart = hasCurrentWindow && currentCutEvaluation
+    ? new Date(currentCutEvaluation.start)
+    : bestWindow.exists
+      ? new Date(bestWindow.start)
+      : null;
   const benefitHours = TEDDING_BENEFIT[input.field.swathDensity];
   const teddingRecommended = dryingHours > 48 && rain.maxProbability > 30 && score >= 40 && score <= 70;
   const tedStart = cutStart ? snapOperationTime(addHours(cutStart, 22)) : null;
@@ -232,9 +237,10 @@ function buildBaleageDecision(
   const overdryPenalty = dryingHours > 48 ? clamp((dryingHours - 48) * 0.5, 0, 10) : 0;
   const adjustedScore = Math.round(clamp(score - overdryPenalty, 0, 100));
 
+  const currentWindowStart = snapOperationTime(now, input.weather.hourly);
   const currentCutEvaluation = evaluateBaleageCandidateWindow(
     input.weather.hourly,
-    now,
+    currentWindowStart,
     dryingHours,
     input.weather.recent,
     now
@@ -256,7 +262,11 @@ function buildBaleageDecision(
       ? Math.min(adjustedScore, 39)
       : 0;
   const hasActionableCut = hasCurrentWindow || bestWindow.exists;
-  const cutStart = hasCurrentWindow ? now : bestWindow.exists ? new Date(bestWindow.start) : null;
+  const cutStart = hasCurrentWindow && currentCutEvaluation
+    ? new Date(currentCutEvaluation.start)
+    : bestWindow.exists
+      ? new Date(bestWindow.start)
+      : null;
   const baleTime = cutStart ? snapOperationTime(addHours(cutStart, dryingHours)) : null;
   const risk = cutStart && baleTime ? labelRisk(forecastBetween(forecast, cutStart, baleTime), baleTime) : "High";
   const rakeTime = cutStart && baleTime ? computeRakeTime(cutStart, baleTime, dryingHours, true, input.weather.hourly) : null;
@@ -452,7 +462,10 @@ function evaluateCandidateWindow(
   const firstRain = curingHours.find((hour) => hour.precipitationAmount > 0.01 || hour.precipitationProbability >= 55);
   const timeToRain = firstRain ? hoursBetween(start, new Date(firstRain.time)) : Number.POSITIVE_INFINITY;
   const dryingMargin = Number.isFinite(timeToRain) ? timeToRain - requiredDryingHours : Number.POSITIVE_INFINITY;
-  const humidHours = curingHours.filter((hour) => hour.relativeHumidity > 80).length;
+  const humidHours = curingHours.filter((hour) => {
+    const h = new Date(hour.time).getHours();
+    return h >= 7 && h <= 19 && hour.relativeHumidity > 80;
+  }).length;
   const sunHoursFirst48 = getDryingMetrics(first48).sunHours;
   const fieldRecentlyWet =
     recent.precipitationLast24h > 0.5 &&
@@ -462,7 +475,7 @@ function evaluateCandidateWindow(
 
   if (!isOperationHour(start)) return null;
   if (rainBeforeDryingComplete >= 0.25) return null;
-  if (metrics.dryingHours < 24) return null;
+  if (metrics.dryingHours < 16) return null;
   if (humidHours > 12) return null;
   if (fieldRecentlyWet) return null;
   if (significantRainNearCut) return null;
