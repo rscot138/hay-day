@@ -3,37 +3,73 @@
 @tailwind utilities;
 
 :root {
-  --background: 78 34% 97%;
-  --foreground: 150 17% 16%;
+  --background: 60 31% 97%;
+  --foreground: 151 22% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 150 17% 16%;
+  --card-foreground: 151 22% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: 150 17% 16%;
-  --primary: 148 45% 27%;
-  --primary-foreground: 78 34% 97%;
-  --secondary: 40 63% 88%;
-  --secondary-foreground: 143 28% 17%;
-  --muted: 76 24% 91%;
-  --muted-foreground: 150 9% 42%;
-  --accent: 194 45% 83%;
-  --accent-foreground: 151 28% 17%;
-  --destructive: 5 68% 47%;
+  --popover-foreground: 151 22% 15%;
+  --primary: 147 44% 23%;
+  --primary-foreground: 60 31% 97%;
+  --secondary: 41 72% 49%;
+  --secondary-foreground: 43 60% 13%;
+  --muted: 60 24% 92%;
+  --muted-foreground: 151 9% 40%;
+  --accent: 149 26% 89%;
+  --accent-foreground: 150 34% 18%;
+  --destructive: 7 63% 44%;
   --destructive-foreground: 0 0% 100%;
-  --border: 78 18% 82%;
-  --input: 78 18% 82%;
-  --ring: 148 45% 27%;
+  --border: 55 20% 84%;
+  --input: 55 20% 84%;
+  --ring: 147 44% 23%;
 }
 
 * {
   border-color: hsl(var(--border));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background:
-    linear-gradient(180deg, rgba(232, 241, 220, 0.88), rgba(249, 250, 245, 0.95) 34%),
-    hsl(var(--background));
+    radial-gradient(1100px 520px at 85% -8%, rgba(255, 240, 205, 0.55), transparent 62%),
+    radial-gradient(900px 520px at -10% 8%, rgba(211, 233, 205, 0.5), transparent 58%),
+    linear-gradient(180deg, hsl(var(--background)) 0%, rgba(252, 251, 246, 1) 46%, hsl(var(--background)) 100%);
+  background-attachment: fixed;
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.18);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.timeline-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(39, 89, 58, 0.35) transparent;
+}
+
+.timeline-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.timeline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(39, 89, 58, 0.28);
 }
 
 button,

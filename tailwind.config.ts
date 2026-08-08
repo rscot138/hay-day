@@ -40,11 +40,13 @@ const config: Config = {
         }
       },
       borderRadius: {
-        lg: "0.5rem",
-        md: "0.375rem",
-        sm: "0.25rem"
+        lg: "0.75rem",
+        md: "0.5rem",
+        sm: "0.375rem"
       },
       boxShadow: {
+        card: "0 1px 2px rgba(23, 38, 28, 0.04), 0 10px 28px rgba(23, 38, 28, 0.06)",
+        lift: "0 2px 4px rgba(23, 38, 28, 0.06), 0 18px 44px rgba(23, 38, 28, 0.1)",
         field: "0 18px 50px rgba(23, 38, 28, 0.12)"
       }
     }
