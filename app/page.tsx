@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { FieldSettings, HayDecision, HourlyWeather, WeatherSummary } from "@/app/types/hay";
+import { FieldSettings, HayDecision, DebugTrace, HourlyWeather, WeatherSummary } from "@/app/types/hay";
 import { cn } from "@/app/lib/utils";
 
 type ApiState =
@@ -59,7 +59,7 @@ const defaultField: FieldSettings = {
   harvestMethod: "dry_hay"
 };
 
-const tabs = ["Home", "Breakdown", "Timeline", "Tedding", "Field"] as const;
+const tabs = ["Home", "Breakdown", "Timeline", "Tedding", "Field", "Debug"] as const;
 type Tab = (typeof tabs)[number];
 
 const tabMeta: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -67,7 +67,8 @@ const tabMeta: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "Breakdown", label: "Breakdown", icon: <ListChecks className="h-4 w-4" /> },
   { id: "Timeline", label: "Forecast", icon: <CalendarDays className="h-4 w-4" /> },
   { id: "Tedding", label: "Tedding & Rake", icon: <Tractor className="h-4 w-4" /> },
-  { id: "Field", label: "Field Setup", icon: <MapPinned className="h-4 w-4" /> }
+  { id: "Field", label: "Field Setup", icon: <MapPinned className="h-4 w-4" /> },
+  { id: "Debug", label: "Debug", icon: <Wheat className="h-4 w-4" /> }
 ];
 
 type HeroTone = {
@@ -321,6 +322,9 @@ export default function Home() {
             }}
             onLocate={locateField}
           />
+        ) : null}
+        {activeTab === "Debug" && decision ? (
+          <DebugScreen decision={decision} />
         ) : null}
 
         {!decision && state.status !== "loading" && state.status !== "locating" ? (
@@ -909,6 +913,223 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
         </Card>
       )}
     </section>
+  );
+}
+
+function DebugScreen({ decision }: { decision: HayDecision }) {
+  const trace = decision.debug;
+  if (!trace) return <Card><CardContent className="p-4 text-muted-foreground">No debug data available.</CardContent></Card>;
+
+  return (
+    <section className="space-y-4">
+      <Card className="border-dashed border-amber-500/40 bg-amber-50/50">
+        <CardContent className="flex items-center gap-3 p-4">
+          <Wheat className="h-5 w-5 shrink-0 text-amber-600" />
+          <p className="text-sm font-semibold text-amber-900">
+            Debug mode — visible to all users until this goes live.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Section title="Final Decision">
+        <KV label="Recommendation" value={trace.final.recommendation} />
+        <KV label="Base score" value={String(trace.final.baseScore)} />
+        <KV label="Final score" value={String(trace.final.finalScore)} />
+        <KV label="Has current window" value={String(trace.final.hasCurrentWindow)} />
+        <KV label="Status rule" value={trace.final.statusRule} />
+      </Section>
+
+      <Section title="Base Score Calculation">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <KV label="Sun hours" value={trace.baseScore.sunHours.toFixed(1)} />
+          <KV label="Drying hours" value={String(trace.baseScore.dryingHours)} />
+          <KV label="Avg wind" value={`${trace.baseScore.averageWind.toFixed(1)} mph`} />
+          <KV label="Avg humidity" value={`${trace.baseScore.averageHumidity.toFixed(0)}%`} />
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <KV label="Rain penalty" value={`-${trace.baseScore.rainPenalty.toFixed(2)}`} />
+          <KV label="Residual penalty" value={`-${trace.baseScore.residualPenalty.toFixed(2)}`} />
+          <KV label="Dew penalty" value={`-${trace.baseScore.dewPenalty.toFixed(2)}`} />
+          <KV label="Wind bonus" value={`+${trace.baseScore.windBonus.toFixed(1)}`} />
+          <KV label="Drying potential" value={trace.baseScore.dryingPotential.toFixed(1)} />
+          <KV label="Raw score" value={String(trace.baseScore.score)} />
+        </div>
+        <p className="mt-2 break-all rounded-lg bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
+          {trace.baseScore.rawFormula}
+        </p>
+      </Section>
+
+      <Section title="Recent Conditions">
+        <KV label="Precip last 24h" value={`${trace.recent.precipitationLast24h} in`} />
+        <KV label="Last rain" value={trace.recent.lastRainAt ?? "None"} />
+        <KV label="Hours since rain" value={trace.recent.hoursSinceLastRain !== null ? `${trace.recent.hoursSinceLastRain}h` : "N/A"} />
+      </Section>
+
+      <Section title="Drying Hours Estimate">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <KV label="Method" value={trace.dryingEstimate.harvestMethod} />
+          <KV label="Density" value={trace.dryingEstimate.density} />
+          <KV label="Conditioning" value={`${trace.dryingEstimate.conditioning} (${trace.dryingEstimate.conditioningFactor})`} />
+          <KV label="Base" value={String(trace.dryingEstimate.base)} />
+          <KV label="Sun adj" value={`${trace.dryingEstimate.sunAdjustment > 0 ? "+" : ""}${trace.dryingEstimate.sunAdjustment}`} />
+          <KV label="Wind adj" value={`${trace.dryingEstimate.windAdjustment > 0 ? "+" : ""}${trace.dryingEstimate.windAdjustment}`} />
+          <KV label="Humidity adj" value={`${trace.dryingEstimate.humidityAdjustment > 0 ? "+" : ""}${trace.dryingEstimate.humidityAdjustment}`} />
+          <KV label="Residual adj" value={`+${trace.dryingEstimate.residualAdjustment}`} />
+          <KV label="Dew adj" value={`+${trace.dryingEstimate.dewAdjustment}`} />
+          <KV label="Result" value={`${trace.dryingEstimate.result}h`} highlight />
+        </div>
+      </Section>
+
+      <Section title="Current Window Evaluation">
+        <div className="grid grid-cols-2 gap-2">
+          <KV label="Window start" value={new Date(trace.currentWindow.start).toLocaleString()} />
+          <KV label="Window end" value={new Date(trace.currentWindow.end).toLocaleString()} />
+          <KV label="Passed" value={trace.currentWindow.passed ? "\u2713 Yes" : "\u2717 No"} highlight={trace.currentWindow.passed} />
+          {!trace.currentWindow.passed && trace.currentWindow.failReason ? (
+            <div className="col-span-2 rounded-lg bg-destructive/10 p-2">
+              <KV label="Fail reason" value={trace.currentWindow.failReason} />
+            </div>
+          ) : null}
+        </div>
+        {trace.currentWindow.checks.length > 0 ? (
+          <div className="mt-3">
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">Gate checks</p>
+            <div className="grid gap-1">
+              {trace.currentWindow.checks.map((check) => (
+                <div key={check.label} className={cn("flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-sm font-mono", check.passed ? "bg-primary/5" : "bg-destructive/5")}>
+                  <span className={cn("font-semibold", check.passed ? "text-primary" : "text-destructive")}>
+                    {check.passed ? "\u2713" : "\u2717"} {check.label}
+                  </span>
+                  <span className="text-muted-foreground">{check.value} <span className="text-xs">({check.threshold})</span></span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {trace.currentWindow.scoreComponents && trace.currentWindow.windowScore !== null ? (
+          <div className="mt-3">
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Window score: {trace.currentWindow.windowScore}
+            </p>
+            <div className="grid gap-1">
+              {trace.currentWindow.scoreComponents.map((comp) => (
+                <div key={comp.label} className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-1.5 font-mono text-sm">
+                  <span className="font-semibold">{comp.label}</span>
+                  <span className="text-muted-foreground">{comp.value >= 0 ? "+" : ""}{comp.value.toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </Section>
+
+      <Section title="Best Window Search">
+        <div className="grid grid-cols-2 gap-2">
+          <KV label="Candidates checked" value={String(trace.bestWindow.candidatesChecked)} />
+          <KV label="Passed" value={String(trace.bestWindow.passedCandidates)} />
+          <KV label="Best found" value={trace.bestWindow.exists ? "Yes" : "No"} highlight={trace.bestWindow.exists} />
+          {trace.bestWindow.exists ? (
+            <>
+              <KV label="Best start" value={trace.bestWindow.start ? new Date(trace.bestWindow.start).toLocaleString() : ""} />
+              <KV label="Confidence" value={trace.bestWindow.confidence} />
+            </>
+          ) : null}
+        </div>
+        {trace.bestWindow.candidates.length > 0 ? (
+          <details className="mt-3">
+            <summary className="cursor-pointer text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Candidate details ({trace.bestWindow.candidates.length})
+            </summary>
+            <div className="mt-2 max-h-64 overflow-auto rounded-lg border">
+              <table className="w-full font-mono text-xs">
+                <thead className="sticky top-0 bg-muted/80">
+                  <tr>
+                    <th className="p-2 text-left">Start</th>
+                    <th className="p-2 text-right">Score</th>
+                    <th className="p-2 text-center">Pass</th>
+                    <th className="p-2 text-left">Fail reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trace.bestWindow.candidates.map((c, i) => (
+                    <tr key={i} className={cn("border-t", c.passed ? "bg-primary/5" : "")}>
+                      <td className="p-2">{new Date(c.start).toLocaleString()}</td>
+                      <td className="p-2 text-right font-bold">{c.score}</td>
+                      <td className="p-2 text-center">{c.passed ? "\u2713" : "\u2717"}</td>
+                      <td className="max-w-[200px] truncate p-2 text-muted-foreground">{c.failReason ?? "\u2014"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        ) : null}
+      </Section>
+
+      <Section title="Raw Forecast (first 72h)">
+        <details>
+          <summary className="cursor-pointer text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            Hourly data ({trace.forecastHours.length} hours)
+          </summary>
+          <div className="mt-2 max-h-80 overflow-auto rounded-lg border">
+            <table className="w-full font-mono text-xs">
+              <thead className="sticky top-0 bg-muted/80">
+                <tr>
+                  <th className="p-2 text-left">Time</th>
+                  <th className="p-2 text-right">Temp</th>
+                  <th className="p-2 text-right">RH%</th>
+                  <th className="p-2 text-right">Wind</th>
+                  <th className="p-2 text-right">Precip</th>
+                  <th className="p-2 text-right">Sun</th>
+                  <th className="p-2 text-center">Dry</th>
+                  <th className="p-2 text-center">Dew</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trace.forecastHours.map((h, i) => {
+                  const d = new Date(h.time);
+                  return (
+                    <tr key={i} className="border-t">
+                      <td className="p-2 whitespace-nowrap">{d.toLocaleDateString()} {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                      <td className="p-2 text-right">{h.temperature.toFixed(0)}\u00b0</td>
+                      <td className="p-2 text-right">{h.relativeHumidity}</td>
+                      <td className="p-2 text-right">{h.windSpeed}</td>
+                      <td className="p-2 text-right">{h.precipitationAmount > 0 ? h.precipitationAmount.toFixed(2) : "\u2014"}</td>
+                      <td className="p-2 text-right">{h.sunFactor.toFixed(2)}</td>
+                      <td className="p-2 text-center">{h.dryingHour ? "\u2600" : "\u2014"}</td>
+                      <td className="p-2 text-center">{h.dewRisk ? "\ud83c\udf19" : "\u2014"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </Section>
+    </section>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">{children}</CardContent>
+    </Card>
+  );
+}
+
+function KV({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={cn("flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-1.5 font-mono text-sm", highlight === true && "bg-primary/5")}>
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn("font-semibold", highlight === true && "text-primary")}>{value}</span>
+    </div>
   );
 }
 

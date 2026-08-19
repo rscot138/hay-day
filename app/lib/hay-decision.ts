@@ -1,6 +1,10 @@
 import {
   Conditioning,
   Confidence,
+  DebugCandidate,
+  DebugCheck,
+  DebugScoreComponent,
+  DebugTrace,
   HarvestMethod,
   HayDecision,
   HayDecisionInput,
@@ -110,15 +114,21 @@ function buildDryHayDecision(
   score: number
 ) {
   const dryingHours = estimateDryingHours(input.field.swathDensity, input.field.conditioning, dryingMetrics, residualPenalty, dewPenalty, "dry_hay");
+  const estimateBreakdown = estimateDryingHoursBreakdown(input.field.swathDensity, input.field.conditioning, dryingMetrics, residualPenalty, dewPenalty, "dry_hay");
   const currentWindowStart = snapOperationTime(now, input.weather.hourly);
+  const windowChecks: DebugCheck[] = [];
+  const windowScore: DebugScoreComponent[] = [];
   const currentCutEvaluation = evaluateCandidateWindow(
     input.weather.hourly,
     currentWindowStart,
     dryingHours,
     input.weather.recent,
-    now
+    now,
+    windowChecks,
+    windowScore
   );
-  const bestWindow = findBestCutWindow(input, now, dryingHours);
+  const bestCandidateTrace: DebugCandidate[] = [];
+  const bestWindow = findBestCutWindow(input, now, dryingHours, bestCandidateTrace);
   const hasCurrentWindow = currentCutEvaluation !== null;
   const status = hasCurrentWindow
     ? score >= 70
@@ -218,6 +228,115 @@ function buildDryHayDecision(
         dewPenalty: Math.round(dewPenalty),
         baseDryingHours: BASE_DRYING[input.field.swathDensity]
       }
+    },
+    debug: buildDryHayDebugTrace(
+      input, now, dryingMetrics, rain, residualPenalty, dewPenalty, score,
+      dryingHours, estimateBreakdown, currentWindowStart, currentCutEvaluation,
+      windowChecks, windowScore, bestWindow, bestCandidateTrace,
+      hasCurrentWindow, finalScore, status
+    )
+  };
+}
+
+function buildDryHayDebugTrace(
+  input: HayDecisionInput,
+  now: Date,
+  dryingMetrics: ReturnType<typeof getDryingMetrics>,
+  rain: ReturnType<typeof getRainMetrics>,
+  residualPenalty: number,
+  dewPenalty: number,
+  baseScore: number,
+  dryingHours: number,
+  estimateBreakdown: ReturnType<typeof estimateDryingHoursBreakdown>,
+  currentWindowStart: Date,
+  currentCutEvaluation: CandidateEvaluation | null,
+  windowChecks: DebugCheck[],
+  windowScore: DebugScoreComponent[],
+  bestWindow: ReturnType<typeof findBestCutWindow>,
+  bestCandidateTrace: DebugCandidate[],
+  hasCurrentWindow: boolean,
+  finalScore: number,
+  recommendation: string
+): DebugTrace {
+  const currentWindow = currentCutEvaluation
+    ? {
+        start: currentCutEvaluation.start.toISOString(),
+        end: currentCutEvaluation.end.toISOString(),
+        passed: true,
+        failReason: null,
+        checks: windowChecks,
+        scoreComponents: windowScore.length > 0 ? windowScore : null,
+        windowScore: currentCutEvaluation.score
+      }
+    : {
+        start: currentWindowStart.toISOString(),
+        end: addHours(currentWindowStart, dryingHours).toISOString(),
+        passed: false,
+        failReason: windowChecks.find((c) => !c.passed)
+          ? `${windowChecks.find((c) => !c.passed)!.label}: ${windowChecks.find((c) => !c.passed)!.value} (need ${windowChecks.find((c) => !c.passed)!.threshold})`
+          : "Unknown",
+        checks: windowChecks,
+        scoreComponents: null,
+        windowScore: null
+      };
+
+  const windBonus = clamp((dryingMetrics.averageWind - 6) * 1.6, 0, 10);
+  const dryingPotential = clamp(
+    dryingMetrics.sunHours * 2.2 +
+      dryingMetrics.dryingHours * 0.85 +
+      dryingMetrics.averageWind * 1.1 -
+      Math.max(0, dryingMetrics.averageHumidity - 58) * 0.45,
+    0,
+    40
+  );
+
+  const passedCandidates = bestCandidateTrace.filter((c) => c.passed).length;
+
+  return {
+    capturedAt: now.toISOString(),
+    recent: input.weather.recent,
+    forecastHours: input.weather.hourly.slice(0, 72),
+    baseScore: {
+      sunHours: dryingMetrics.sunHours,
+      dryingHours: dryingMetrics.dryingHours,
+      averageWind: dryingMetrics.averageWind,
+      averageHumidity: dryingMetrics.averageHumidity,
+      rainPenalty: rain.penalty,
+      rainAmount: rain.amount,
+      rainMaxProbability: rain.maxProbability,
+      rainNextAt: rain.nextRainAt,
+      residualPenalty,
+      dewPenalty,
+      windBonus,
+      dryingPotential,
+      rawFormula: `dryingPotential(${dryingPotential.toFixed(1)}) - rain(${rain.penalty.toFixed(1)}) - residual(${residualPenalty.toFixed(1)}) - dew(${dewPenalty.toFixed(1)}) + wind(${windBonus.toFixed(1)}) + 55 = ${baseScore}`,
+      score: baseScore
+    },
+    dryingEstimate: estimateBreakdown,
+    currentWindow,
+    bestWindow: {
+      candidatesChecked: bestCandidateTrace.length,
+      passedCandidates,
+      exists: bestWindow.exists,
+      start: bestWindow.start,
+      score: currentCutEvaluation?.score ?? 0,
+      confidence: bestWindow.confidence,
+      candidates: bestCandidateTrace.slice(0, 20)
+    },
+    final: {
+      hasCurrentWindow,
+      baseScore,
+      finalScore,
+      recommendation,
+      statusRule: hasCurrentWindow
+        ? baseScore >= 70
+          ? "score >= 70 \u2192 CUT NOW"
+          : baseScore >= 50
+            ? "score >= 50 \u2192 PROCEED WITH CAUTION"
+            : "score < 50 \u2192 DO NOT CUT"
+        : bestWindow.exists
+          ? "no current window, best window exists \u2192 capped at 49"
+          : "no viable windows \u2192 0"
     }
   };
 }
@@ -233,19 +352,25 @@ function buildBaleageDecision(
   score: number
 ) {
   const dryingHours = estimateDryingHours(input.field.swathDensity, input.field.conditioning, dryingMetrics, residualPenalty, dewPenalty, "baleage");
+  const estimateBreakdown = estimateDryingHoursBreakdown(input.field.swathDensity, input.field.conditioning, dryingMetrics, residualPenalty, dewPenalty, "baleage");
   const tooWet = dryingHours < 10;
   const overdryPenalty = dryingHours > 48 ? clamp((dryingHours - 48) * 0.5, 0, 10) : 0;
   const adjustedScore = Math.round(clamp(score - overdryPenalty, 0, 100));
 
   const currentWindowStart = snapOperationTime(now, input.weather.hourly);
+  const windowChecks: DebugCheck[] = [];
+  const windowScore: DebugScoreComponent[] = [];
   const currentCutEvaluation = evaluateBaleageCandidateWindow(
     input.weather.hourly,
     currentWindowStart,
     dryingHours,
     input.weather.recent,
-    now
+    now,
+    windowChecks,
+    windowScore
   );
-  const bestWindow = findBestBaleageCutWindow(input, now, dryingHours);
+  const bestCandidateTrace: DebugCandidate[] = [];
+  const bestWindow = findBestBaleageCutWindow(input, now, dryingHours, bestCandidateTrace);
   const hasCurrentWindow = currentCutEvaluation !== null && !tooWet;
   const status = tooWet
     ? "DO NOT CUT"
@@ -334,6 +459,121 @@ function buildBaleageDecision(
         dewPenalty: Math.round(dewPenalty),
         baseDryingHours: BALEAGE_BASE_DRYING[input.field.swathDensity]
       }
+    },
+    debug: buildBaleageDebugTrace(
+      input, now, dryingMetrics, rain, residualPenalty, dewPenalty, score,
+      dryingHours, estimateBreakdown, overdryPenalty, adjustedScore,
+      currentWindowStart, currentCutEvaluation,
+      windowChecks, windowScore, bestWindow, bestCandidateTrace,
+      tooWet, hasCurrentWindow, finalScore, status
+    )
+  };
+}
+
+function buildBaleageDebugTrace(
+  input: HayDecisionInput,
+  now: Date,
+  dryingMetrics: ReturnType<typeof getDryingMetrics>,
+  rain: ReturnType<typeof getRainMetrics>,
+  residualPenalty: number,
+  dewPenalty: number,
+  baseScore: number,
+  dryingHours: number,
+  estimateBreakdown: ReturnType<typeof estimateDryingHoursBreakdown>,
+  overdryPenalty: number,
+  adjustedScore: number,
+  currentWindowStart: Date,
+  currentCutEvaluation: CandidateEvaluation | null,
+  windowChecks: DebugCheck[],
+  windowScore: DebugScoreComponent[],
+  bestWindow: ReturnType<typeof findBestBaleageCutWindow>,
+  bestCandidateTrace: DebugCandidate[],
+  tooWet: boolean,
+  hasCurrentWindow: boolean,
+  finalScore: number,
+  recommendation: string
+): DebugTrace {
+  const currentWindow = currentCutEvaluation
+    ? {
+        start: currentCutEvaluation.start.toISOString(),
+        end: currentCutEvaluation.end.toISOString(),
+        passed: true,
+        failReason: null,
+        checks: windowChecks,
+        scoreComponents: windowScore.length > 0 ? windowScore : null,
+        windowScore: currentCutEvaluation.score
+      }
+    : {
+        start: currentWindowStart.toISOString(),
+        end: addHours(currentWindowStart, dryingHours).toISOString(),
+        passed: false,
+        failReason: tooWet
+          ? `dryingHours(${dryingHours}) < 10 \u2192 too wet`
+          : windowChecks.find((c) => !c.passed)
+            ? `${windowChecks.find((c) => !c.passed)!.label}: ${windowChecks.find((c) => !c.passed)!.value} (need ${windowChecks.find((c) => !c.passed)!.threshold})`
+            : "Unknown",
+        checks: windowChecks,
+        scoreComponents: null,
+        windowScore: null
+      };
+
+  const windBonus = clamp((dryingMetrics.averageWind - 6) * 1.6, 0, 10);
+  const dryingPotential = clamp(
+    dryingMetrics.sunHours * 2.2 +
+      dryingMetrics.dryingHours * 0.85 +
+      dryingMetrics.averageWind * 1.1 -
+      Math.max(0, dryingMetrics.averageHumidity - 58) * 0.45,
+    0,
+    40
+  );
+
+  return {
+    capturedAt: now.toISOString(),
+    recent: input.weather.recent,
+    forecastHours: input.weather.hourly.slice(0, 72),
+    baseScore: {
+      sunHours: dryingMetrics.sunHours,
+      dryingHours: dryingMetrics.dryingHours,
+      averageWind: dryingMetrics.averageWind,
+      averageHumidity: dryingMetrics.averageHumidity,
+      rainPenalty: rain.penalty,
+      rainAmount: rain.amount,
+      rainMaxProbability: rain.maxProbability,
+      rainNextAt: rain.nextRainAt,
+      residualPenalty,
+      dewPenalty,
+      windBonus,
+      dryingPotential,
+      rawFormula: `dryingPotential(${dryingPotential.toFixed(1)}) - rain(${rain.penalty.toFixed(1)}) - residual(${residualPenalty.toFixed(1)}) - dew(${dewPenalty.toFixed(1)}) + wind(${windBonus.toFixed(1)}) + 55 = ${baseScore}${overdryPenalty > 0 ? ` \u2192 overdry penalty(-${overdryPenalty.toFixed(1)}) \u2192 ${adjustedScore}` : ""}`,
+      score: baseScore
+    },
+    dryingEstimate: estimateBreakdown,
+    currentWindow,
+    bestWindow: {
+      candidatesChecked: bestCandidateTrace.length,
+      passedCandidates: bestCandidateTrace.filter((c) => c.passed).length,
+      exists: bestWindow.exists,
+      start: bestWindow.start,
+      score: currentCutEvaluation?.score ?? 0,
+      confidence: bestWindow.confidence,
+      candidates: bestCandidateTrace.slice(0, 20)
+    },
+    final: {
+      hasCurrentWindow,
+      baseScore,
+      finalScore,
+      recommendation,
+      statusRule: tooWet
+        ? "tooWet(dryingHours<10) \u2192 DO NOT CUT"
+        : hasCurrentWindow
+          ? adjustedScore >= 60
+            ? "score >= 60 \u2192 CUT NOW"
+            : adjustedScore >= 40
+              ? "score >= 40 \u2192 PROCEED WITH CAUTION"
+              : "score < 40 \u2192 DO NOT CUT"
+          : bestWindow.exists
+            ? "no current window, best window exists \u2192 capped at 39"
+            : "no viable windows \u2192 0"
     }
   };
 }
@@ -397,17 +637,66 @@ function estimateDryingHours(
   return Math.round(clamp(base + sunAdjustment + windAdjustment + humidityAdjustment + residualPenalty * 0.8 + dewPenalty * 0.9, min, max));
 }
 
-function findBestCutWindow(input: HayDecisionInput, now: Date, currentDryingHours: number) {
+function estimateDryingHoursBreakdown(
+  density: SwathDensity,
+  conditioning: Conditioning,
+  metrics: ReturnType<typeof getDryingMetrics>,
+  residualPenalty: number,
+  dewPenalty: number,
+  harvestMethod: HarvestMethod = "dry_hay"
+) {
+  const baseMap = harvestMethod === "baleage" ? BALEAGE_BASE_DRYING : BASE_DRYING;
+  const base = baseMap[density] * CONDITIONING_FACTOR[conditioning];
+  const sunAdjustment = -clamp(metrics.sunHours * 0.45, 0, 12);
+  const windAdjustment = -clamp((metrics.averageWind - 5) * 1.4, 0, 10);
+  const humidityAdjustment = clamp((metrics.averageHumidity - 62) * 0.45, -6, 16);
+  const residualAdjustment = residualPenalty * 0.8;
+  const dewAdjustment = dewPenalty * 0.9;
+  const min = harvestMethod === "baleage" ? 10 : 32;
+  const max = harvestMethod === "baleage" ? 48 : 96;
+  const result = Math.round(clamp(base + sunAdjustment + windAdjustment + humidityAdjustment + residualAdjustment + dewAdjustment, min, max));
+  return {
+    harvestMethod,
+    density,
+    conditioning,
+    base: Math.round(base * 10) / 10,
+    conditioningFactor: CONDITIONING_FACTOR[conditioning],
+    sunAdjustment: Math.round(sunAdjustment * 10) / 10,
+    windAdjustment: Math.round(windAdjustment * 10) / 10,
+    humidityAdjustment: Math.round(humidityAdjustment * 10) / 10,
+    residualAdjustment: Math.round(residualAdjustment * 10) / 10,
+    dewAdjustment: Math.round(dewAdjustment * 10) / 10,
+    result
+  };
+}
+
+function findBestCutWindow(
+  input: HayDecisionInput,
+  now: Date,
+  currentDryingHours: number,
+  traceCandidates?: DebugCandidate[]
+) {
   const candidates = generateCandidates(now, input.weather.hourly);
   const scored = candidates
     .flatMap((start) => {
+      const checks: DebugCheck[] | undefined = traceCandidates ? [] : undefined;
       const evaluation = evaluateCandidateWindow(
         input.weather.hourly,
         start,
         currentDryingHours,
         input.weather.recent,
-        now
+        now,
+        checks
       );
+      if (traceCandidates) {
+        const failCheck = checks?.find((c) => !c.passed);
+        traceCandidates.push({
+          start: start.toISOString(),
+          score: evaluation?.score ?? 0,
+          passed: evaluation !== null,
+          failReason: failCheck ? `${failCheck.label}: ${failCheck.value} (need ${failCheck.threshold})` : null
+        });
+      }
       return evaluation ? [evaluation] : [];
     })
     .sort((a, b) => b.score - a.score);
@@ -445,11 +734,18 @@ function evaluateCandidateWindow(
   start: Date,
   requiredDryingHours: number,
   recent: HayDecisionInput["weather"]["recent"],
-  now: Date
+  now: Date,
+  traceChecks?: DebugCheck[],
+  traceScore?: DebugScoreComponent[]
 ): CandidateEvaluation | null {
   const end = addHours(start, requiredDryingHours);
   const curingHours = forecastBetween(hourly, start, end);
-  if (curingHours.length < Math.min(requiredDryingHours, 24)) return null;
+  const minHours = Math.min(requiredDryingHours, 24);
+  if (curingHours.length < minHours) {
+    traceChecks?.push({ label: "Enough forecast hours", passed: false, value: String(curingHours.length), threshold: `>= ${minHours}` });
+    return null;
+  }
+  traceChecks?.push({ label: "Enough forecast hours", passed: true, value: String(curingHours.length), threshold: `>= ${minHours}` });
 
   const first24 = forecastBetween(hourly, start, addHours(start, 24));
   const first48 = forecastBetween(hourly, start, addHours(start, 48));
@@ -473,15 +769,23 @@ function evaluateCandidateWindow(
     recent.hoursSinceLastRain < 8 &&
     hoursBetween(now, start) < 8;
 
+  traceChecks?.push({ label: "Is operation hour", passed: isOperationHour(start), value: `${start.getHours()}:00`, threshold: "10:00\u201317:00" });
   if (!isOperationHour(start)) return null;
+  traceChecks?.push({ label: "Rain during curing", passed: rainBeforeDryingComplete < 0.25, value: `${rainBeforeDryingComplete.toFixed(2)} in`, threshold: "< 0.25 in" });
   if (rainBeforeDryingComplete >= 0.25) return null;
+  traceChecks?.push({ label: "Drying hours in window", passed: metrics.dryingHours >= 16, value: String(metrics.dryingHours), threshold: ">= 16" });
   if (metrics.dryingHours < 16) return null;
+  traceChecks?.push({ label: "Humid hours (daytime, RH>80%)", passed: humidHours <= 12, value: String(humidHours), threshold: "<= 12" });
   if (humidHours > 12) return null;
+  traceChecks?.push({ label: "Field recently wet", passed: !fieldRecentlyWet, value: fieldRecentlyWet ? "yes" : "no", threshold: "no" });
   if (fieldRecentlyWet) return null;
+
+  traceChecks?.push({ label: "Significant rain near cut", passed: !significantRainNearCut, value: significantRainNearCut ? "yes" : "no", threshold: "no" });
   if (significantRainNearCut) return null;
 
   const dew = curingHours.filter((hour) => hour.dewRisk).length;
   const risk = labelRisk(curingHours, end);
+  traceChecks?.push({ label: "Risk level", passed: risk !== "High", value: risk, threshold: "not High" });
   if (risk === "High") return null;
 
   const earlyRainPenalty = rainFirst24 >= 0.1 ? clamp(Math.round(rainFirst24 * 30), 0, 20) : 0;
@@ -491,16 +795,37 @@ function evaluateCandidateWindow(
   const windBonus = metrics.averageWind >= 6 ? 9 : 0;
   const timingPenalty = clamp(hoursBetween(now, start) / 24, 0, 8);
   const offHoursPenalty = !isOperationHour(end) ? 15 : 0;
+  const sunContrib = metrics.sunHours * 1.4;
+  const dryContrib = metrics.dryingHours * 1.2;
+  const windContrib = metrics.averageWind;
+  const rainPenContrib = rain.penalty * 1.6;
+  const dewContrib = dew * 1.5;
+
+  traceScore?.push(
+    { label: "No-rain bonus", value: noRainBonus, formula: noRainBonus > 0 ? `amount(${rain.amount.toFixed(2)})<0.02 & prob(${rain.maxProbability})<30 \u2192 18` : "0" },
+    { label: "Margin bonus", value: marginBonus, formula: Number.isFinite(dryingMargin) ? `margin=${dryingMargin.toFixed(1)}h \u2192 clamp(0,18)\u00d71.6` : "\u221e margin \u2192 28" },
+    { label: "Humidity bonus", value: humidityBonus, formula: `avgHumidity=${metrics.averageHumidity.toFixed(0)}` },
+    { label: "Wind bonus", value: windBonus, formula: `avgWind=${metrics.averageWind.toFixed(1)} ${metrics.averageWind >= 6 ? "\u22656 \u2192 9" : "<6 \u2192 0"}` },
+    { label: "Sun contrib", value: sunContrib, formula: `sunHours(${metrics.sunHours.toFixed(1)}) \u00d7 1.4` },
+    { label: "Drying contrib", value: dryContrib, formula: `dryingHours(${metrics.dryingHours}) \u00d7 1.2` },
+    { label: "Wind contrib", value: windContrib, formula: `avgWind(${metrics.averageWind.toFixed(1)})` },
+    { label: "Rain penalty", value: -rainPenContrib, formula: `rainPenalty(${rain.penalty.toFixed(1)}) \u00d7 1.6` },
+    { label: "Dew penalty", value: -dewContrib, formula: `dewHours(${dew}) \u00d7 1.5` },
+    { label: "Timing penalty", value: -timingPenalty, formula: `startIn${hoursBetween(now, start).toFixed(1)}h / 24, clamp(0,8)` },
+    { label: "Off-hours penalty", value: -offHoursPenalty, formula: !isOperationHour(end) ? "end outside 10\u201317 \u2192 15" : "0" },
+    { label: "Early-rain penalty", value: -earlyRainPenalty, formula: earlyRainPenalty > 0 ? `rain24(${rainFirst24.toFixed(2)}in)\u00d730, clamp(0,20)` : "0" }
+  );
+
   const score = clamp(
     noRainBonus +
       marginBonus +
       humidityBonus +
       windBonus +
-      metrics.sunHours * 1.4 +
-      metrics.dryingHours * 1.2 +
-      metrics.averageWind -
-      rain.penalty * 1.6 -
-      dew * 1.5 -
+      sunContrib +
+      dryContrib +
+      windContrib -
+      rainPenContrib -
+      dewContrib -
       timingPenalty -
       offHoursPenalty -
       earlyRainPenalty,
@@ -610,13 +935,20 @@ function evaluateBaleageCandidateWindow(
   start: Date,
   requiredDryingHours: number,
   recent: HayDecisionInput["weather"]["recent"],
-  now: Date
+  now: Date,
+  traceChecks?: DebugCheck[],
+  traceScore?: DebugScoreComponent[]
 ): CandidateEvaluation | null {
   const baleTime = addHours(start, requiredDryingHours);
   const wrapEnd = addHours(baleTime, 6);
   const curingHours = forecastBetween(hourly, start, baleTime);
   const wrapHours = forecastBetween(hourly, baleTime, wrapEnd);
-  if (curingHours.length < Math.min(requiredDryingHours, 8)) return null;
+  const minHours = Math.min(requiredDryingHours, 8);
+  if (curingHours.length < minHours) {
+    traceChecks?.push({ label: "Enough forecast hours", passed: false, value: String(curingHours.length), threshold: `>= ${minHours}` });
+    return null;
+  }
+  traceChecks?.push({ label: "Enough forecast hours", passed: true, value: String(curingHours.length), threshold: `>= ${minHours}` });
 
   const first12 = forecastBetween(hourly, start, addHours(start, 12));
   const metrics = getDryingMetrics(curingHours);
@@ -630,10 +962,15 @@ function evaluateBaleageCandidateWindow(
     recent.hoursSinceLastRain < 6 &&
     hoursBetween(now, start) < 6;
 
+  traceChecks?.push({ label: "Is operation hour", passed: isOperationHour(start), value: `${start.getHours()}:00`, threshold: "10:00\u201317:00" });
   if (!isOperationHour(start)) return null;
+  traceChecks?.push({ label: "Rain before baling", passed: !significantRainBeforeBaling, value: `${rainBeforeBaling.toFixed(2)} in`, threshold: "< 0.25 in" });
   if (significantRainBeforeBaling) return null;
+  traceChecks?.push({ label: "Rain in wrap window", passed: !rainInWrap, value: rainInWrap ? "yes" : "no", threshold: "no" });
   if (rainInWrap) return null;
+  traceChecks?.push({ label: "Field recently wet", passed: !fieldRecentlyWet, value: fieldRecentlyWet ? "yes" : "no", threshold: "no" });
   if (fieldRecentlyWet) return null;
+  traceChecks?.push({ label: "Drying hours", passed: metrics.dryingHours >= 4, value: String(metrics.dryingHours), threshold: ">= 4" });
   if (metrics.dryingHours < 4) return null;
 
   const firstRain = curingHours.find((hour) => hour.precipitationAmount > 0.05);
@@ -644,6 +981,7 @@ function evaluateBaleageCandidateWindow(
 
   const dew = curingHours.filter((hour) => hour.dewRisk).length;
   const risk = labelRisk(curingHours, baleTime);
+  traceChecks?.push({ label: "Risk level", passed: risk !== "High", value: risk, threshold: "not High" });
   if (risk === "High") return null;
 
   const noRainBonus = rainBeforeBaling < 0.02 ? 18 : rainBeforeBaling < 0.1 ? 10 : 0;
@@ -652,16 +990,36 @@ function evaluateBaleageCandidateWindow(
   const wrapBonus = !rainInWrap ? 12 : 0;
   const timingPenalty = clamp(hoursBetween(now, start) / 24, 0, 6);
   const offHoursPenalty = !isOperationHour(baleTime) ? 15 : 0;
+  const sunContrib = metrics.sunHours * 1.0;
+  const dryContrib = metrics.dryingHours * 0.8;
+  const windContrib = metrics.averageWind * 0.5;
+  const dewContrib = dew * 1.0;
+  const rainPenContrib = rainPenalty;
+
+  traceScore?.push(
+    { label: "No-rain bonus", value: noRainBonus, formula: rainBeforeBaling < 0.02 ? `beforeBaling(${rainBeforeBaling.toFixed(2)})<0.02 \u2192 18` : rainBeforeBaling < 0.1 ? `\u2192 10` : "0" },
+    { label: "Humidity bonus", value: humidityBonus, formula: `avgHumidity=${metrics.averageHumidity.toFixed(0)}` },
+    { label: "Wind bonus", value: windBonus, formula: `avgWind=${metrics.averageWind.toFixed(1)} ${metrics.averageWind >= 4 ? "\u22654 \u2192 6" : "<4 \u2192 0"}` },
+    { label: "Wrap bonus", value: wrapBonus, formula: !rainInWrap ? "no rain in wrap \u2192 12" : "0" },
+    { label: "Sun contrib", value: sunContrib, formula: `sunHours(${metrics.sunHours.toFixed(1)}) \u00d7 1.0` },
+    { label: "Drying contrib", value: dryContrib, formula: `dryingHours(${metrics.dryingHours}) \u00d7 0.8` },
+    { label: "Wind contrib", value: windContrib, formula: `avgWind(${metrics.averageWind.toFixed(1)}) \u00d7 0.5` },
+    { label: "Rain penalty", value: -rainPenContrib, formula: hasMinorRainAfterWilting ? `rainPenalty(${rain.penalty.toFixed(1)})\u00d70.5 (late rain)` : `rainPenalty(${rain.penalty.toFixed(1)})` },
+    { label: "Dew penalty", value: -dewContrib, formula: `dewHours(${dew}) \u00d7 1.0` },
+    { label: "Timing penalty", value: -timingPenalty, formula: `startIn${hoursBetween(now, start).toFixed(1)}h / 24, clamp(0,6)` },
+    { label: "Off-hours penalty", value: -offHoursPenalty, formula: !isOperationHour(baleTime) ? "baleTime outside 10\u201317 \u2192 15" : "0" }
+  );
+
   const score = clamp(
     noRainBonus +
       humidityBonus +
       windBonus +
       wrapBonus +
-      metrics.sunHours * 1.0 +
-      metrics.dryingHours * 0.8 +
-      metrics.averageWind * 0.5 -
-      rainPenalty -
-      dew * 1.0 -
+      sunContrib +
+      dryContrib +
+      windContrib -
+      rainPenContrib -
+      dewContrib -
       timingPenalty -
       offHoursPenalty,
     0,
@@ -687,17 +1045,33 @@ function getBaleageConfidence(
   return "low";
 }
 
-function findBestBaleageCutWindow(input: HayDecisionInput, now: Date, currentDryingHours: number) {
+function findBestBaleageCutWindow(
+  input: HayDecisionInput,
+  now: Date,
+  currentDryingHours: number,
+  traceCandidates?: DebugCandidate[]
+) {
   const candidates = generateCandidates(now, input.weather.hourly);
   const scored = candidates
     .flatMap((start) => {
+      const checks: DebugCheck[] | undefined = traceCandidates ? [] : undefined;
       const evaluation = evaluateBaleageCandidateWindow(
         input.weather.hourly,
         start,
         currentDryingHours,
         input.weather.recent,
-        now
+        now,
+        checks
       );
+      if (traceCandidates) {
+        const failCheck = checks?.find((c) => !c.passed);
+        traceCandidates.push({
+          start: start.toISOString(),
+          score: evaluation?.score ?? 0,
+          passed: evaluation !== null,
+          failReason: failCheck ? `${failCheck.label}: ${failCheck.value} (need ${failCheck.threshold})` : null
+        });
+      }
       return evaluation ? [evaluation] : [];
     })
     .sort((a, b) => b.score - a.score);

@@ -99,6 +99,7 @@ export type HayDecision = {
     };
   };
   harvestMethod: HarvestMethod;
+  debug?: DebugTrace;
   harvestComparison?: {
     dryHay: {
       summary: string;
@@ -120,4 +121,88 @@ export type HayDecisionInput = {
   field: FieldSettings;
   weather: WeatherSummary;
   now?: string;
+};
+
+export type DebugCheck = {
+  label: string;
+  passed: boolean;
+  value: string;
+  threshold: string;
+};
+
+export type DebugScoreComponent = {
+  label: string;
+  value: number;
+  formula: string;
+};
+
+export type DebugCandidate = {
+  start: string;
+  score: number;
+  passed: boolean;
+  failReason: string | null;
+};
+
+export type DebugTrace = {
+  capturedAt: string;
+  recent: {
+    precipitationLast24h: number;
+    lastRainAt: string | null;
+    hoursSinceLastRain: number | null;
+  };
+  forecastHours: HourlyWeather[];
+  baseScore: {
+    sunHours: number;
+    dryingHours: number;
+    averageWind: number;
+    averageHumidity: number;
+    rainPenalty: number;
+    rainAmount: number;
+    rainMaxProbability: number;
+    rainNextAt: string | null;
+    residualPenalty: number;
+    dewPenalty: number;
+    windBonus: number;
+    dryingPotential: number;
+    rawFormula: string;
+    score: number;
+  };
+  dryingEstimate: {
+    harvestMethod: string;
+    density: string;
+    conditioning: string;
+    base: number;
+    conditioningFactor: number;
+    sunAdjustment: number;
+    windAdjustment: number;
+    humidityAdjustment: number;
+    residualAdjustment: number;
+    dewAdjustment: number;
+    result: number;
+  };
+  currentWindow: {
+    start: string;
+    end: string;
+    passed: boolean;
+    failReason: string | null;
+    checks: DebugCheck[];
+    scoreComponents: DebugScoreComponent[] | null;
+    windowScore: number | null;
+  };
+  bestWindow: {
+    candidatesChecked: number;
+    passedCandidates: number;
+    exists: boolean;
+    start: string;
+    score: number;
+    confidence: string;
+    candidates: DebugCandidate[];
+  };
+  final: {
+    hasCurrentWindow: boolean;
+    baseScore: number;
+    finalScore: number;
+    recommendation: string;
+    statusRule: string;
+  };
 };
