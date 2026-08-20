@@ -417,6 +417,8 @@ function ScoreRing({ score, tone }: { score: number; tone: HeroTone }) {
 function HomeScreen({ field, decision }: { field: FieldSettings; decision: HayDecision }) {
   const isBaleage = decision.harvestMethod === "baleage";
   const tone = decision.score >= 70 ? heroTones.good : decision.score >= 50 ? heroTones.caution : heroTones.bad;
+  const hasCurrentWindow = decision.recommendation === "CUT NOW" || decision.recommendation === "PROCEED WITH CAUTION";
+  const showUpcomingWindow = !hasCurrentWindow && decision.bestWindow.exists;
 
   const steps = isBaleage
     ? [
@@ -434,35 +436,93 @@ function HomeScreen({ field, decision }: { field: FieldSettings; decision: HayDe
 
   return (
     <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-      <div className={cn("relative overflow-hidden rounded-2xl p-5 shadow-lift sm:p-8", tone.text)}>
-        <div className={cn("absolute inset-0 bg-gradient-to-br", tone.gradient)} />
-        <Wheat className="pointer-events-none absolute -bottom-8 -right-6 h-48 w-48 opacity-[0.09]" strokeWidth={1} />
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={cn("rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest", tone.badge)}>
-                {isBaleage ? "Baleage mode" : "Dry hay mode"}
-              </span>
-              <span className={cn("text-[11px] font-bold uppercase tracking-widest", tone.sub)}>
-                Live forecast
-              </span>
+      {showUpcomingWindow ? (
+        <div className="flex flex-col gap-4">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#d25a41] via-[#c14831] to-[#942e1c] p-4 shadow-lift sm:p-5">
+            <Wheat className="pointer-events-none absolute -bottom-4 -right-3 h-24 w-24 opacity-[0.09]" strokeWidth={1} />
+            <div className="relative flex items-center justify-between gap-4">
+              <div>
+                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#fdf6f4]">
+                  {isBaleage ? "Baleage" : "Dry hay"}
+                </span>
+                <p className="mt-2 text-2xl font-black leading-none tracking-tight text-[#fdf6f4] sm:text-3xl">
+                  DO NOT CUT
+                </p>
+              </div>
+              <ScoreRing score={decision.score} tone={heroTones.bad} />
             </div>
-            <p className={cn("mt-4 text-sm font-semibold", tone.sub)}>Should I cut right now?</p>
-            <p className="mt-1 text-5xl font-black leading-none tracking-tight sm:text-6xl">
-              {decision.recommendation}
+            <p className="relative mt-2 text-sm font-medium text-[#fdf6f4]/70">
+              Conditions are not right for cutting right now.
             </p>
           </div>
-          <ScoreRing score={decision.score} tone={tone} />
-        </div>
-        <div className="relative mt-6 grid gap-2 sm:grid-cols-2">
-          {decision.reasons.map((reason) => (
-            <div key={reason} className={cn("flex gap-2.5 rounded-xl px-3.5 py-3 text-sm font-medium", tone.pill)}>
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{reason}</span>
+
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2b6b3f] via-[#245a35] to-[#163d25] p-5 shadow-lift sm:p-7">
+            <Wheat className="pointer-events-none absolute -bottom-6 -right-4 h-36 w-36 opacity-[0.09]" strokeWidth={1} />
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#f6f7ee]">
+                  Upcoming window
+                </span>
+                <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#f6f7ee]/70">
+                  {decision.bestWindow.confidence} confidence
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-[#f6f7ee]/70">Keep an eye on this upcoming window</p>
+              <p className="mt-1 text-xl font-black leading-snug tracking-tight text-[#f6f7ee] sm:text-2xl">
+                {decision.bestWindow.dayLabel}
+              </p>
+              {decision.bestWindow.start ? (
+                <p className="mt-1 text-sm font-medium text-[#f6f7ee]/70">
+                  {new Date(decision.bestWindow.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                  {" \u2014 "}
+                  {decision.bestWindow.end ? new Date(decision.bestWindow.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null}
+                </p>
+              ) : null}
+              <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#f6f7ee]/80">
+                {decision.bestWindow.message}
+              </p>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {decision.reasons.map((reason) => (
+                  <div key={reason} className="flex gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-medium text-[#f6f7ee]">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{reason}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className={cn("relative overflow-hidden rounded-2xl p-5 shadow-lift sm:p-8", tone.text)}>
+          <div className={cn("absolute inset-0 bg-gradient-to-br", tone.gradient)} />
+          <Wheat className="pointer-events-none absolute -bottom-8 -right-6 h-48 w-48 opacity-[0.09]" strokeWidth={1} />
+          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={cn("rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest", tone.badge)}>
+                  {isBaleage ? "Baleage mode" : "Dry hay mode"}
+                </span>
+                <span className={cn("text-[11px] font-bold uppercase tracking-widest", tone.sub)}>
+                  Live forecast
+                </span>
+              </div>
+              <p className={cn("mt-4 text-sm font-semibold", tone.sub)}>Should I cut right now?</p>
+              <p className="mt-1 text-5xl font-black leading-none tracking-tight sm:text-6xl">
+                {decision.recommendation}
+              </p>
+            </div>
+            <ScoreRing score={decision.score} tone={tone} />
+          </div>
+          <div className="relative mt-6 grid gap-2 sm:grid-cols-2">
+            {decision.reasons.map((reason) => (
+              <div key={reason} className={cn("flex gap-2.5 rounded-xl px-3.5 py-3 text-sm font-medium", tone.pill)}>
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{reason}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4">
         <Card>
