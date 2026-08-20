@@ -182,7 +182,7 @@ function buildDryHayDecision(
         : teddingRecommended && tedStart && tedEnd
         ? `Tedding recommended ${formatDay(tedStart)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect to save ~${benefitHours} hours drying time.`
         : tedStart && tedEnd
-          ? `Tedding is optional. Best scouting window is ${formatDay(tedStart)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are ~${benefitHours} hours if the windrow needs help.`
+          ? `Tedding is optional. Best window to double-check is ${formatDay(tedStart)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are ~${benefitHours} hours if the windrow needs help.`
           : "Tedding is optional, but there is no valid cut window to attach it to yet."
     },
     timeline: {
@@ -736,7 +736,7 @@ function findBestCutWindow(
         ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence based on strong drying conditions before rain.`
         : best.confidence === "medium"
           ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Validated window, but keep caution for margin, humidity, or late rain risk.`
-          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are marginal, so scout before committing.`
+          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are marginal, so validate before committing.`
   };
 }
 
@@ -1115,7 +1115,7 @@ function findBestBaleageCutWindow(
         ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence — short drying works well with baleage.`
         : best.confidence === "medium"
           ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are workable for baleage with moderate caution.`
-          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Marginal window, but baleage may still work — scout first.`
+          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Marginal window, but baleage may still work — validate first.`
   };
 }
 
