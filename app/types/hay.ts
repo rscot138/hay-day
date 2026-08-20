@@ -50,6 +50,8 @@ export type HayDecision = {
     exists: boolean;
     start: string;
     end: string;
+    startLabel: string;
+    endLabel: string;
     dayLabel: string;
     confidence: Confidence;
     message: string;

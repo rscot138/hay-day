@@ -486,11 +486,11 @@ function HomeScreen({ field, decision }: { field: FieldSettings; decision: HayDe
               <p className="mt-1 text-xl font-black leading-snug tracking-tight text-[#f6f7ee] sm:text-2xl">
                 {decision.bestWindow.dayLabel}
               </p>
-              {decision.bestWindow.start ? (
+              {decision.bestWindow.startLabel ? (
                 <p className="mt-1 text-sm font-medium text-[#f6f7ee]/70">
-                  {new Date(decision.bestWindow.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                  {decision.bestWindow.startLabel}
                   {" \u2014 "}
-                  {decision.bestWindow.end ? new Date(decision.bestWindow.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null}
+                  {decision.bestWindow.endLabel}
                 </p>
               ) : null}
               <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#f6f7ee]/80">
@@ -573,7 +573,7 @@ function HomeScreen({ field, decision }: { field: FieldSettings; decision: HayDe
                 {decision.bestWindow.exists ? (
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
                     <ArrowRight className="h-3.5 w-3.5" />
-                    <span className="font-semibold">{decision.bestWindow.start}</span>
+                    <span className="font-semibold">{decision.bestWindow.startLabel}</span>
                   </span>
                 ) : null}
               </div>

@@ -714,6 +714,8 @@ function findBestCutWindow(
       exists: false,
       start: "",
       end: "",
+      startLabel: "",
+      endLabel: "",
       dayLabel: "",
       confidence: "low" as const,
       message: "No validated cutting opportunities in the next 7 days. Next step: keep the field standing and check again after the next weather update."
@@ -725,6 +727,8 @@ function findBestCutWindow(
     exists: true,
     start: best.start.toISOString(),
     end: addHours(best.start, 4).toISOString(),
+    startLabel: formatTime(best.start),
+    endLabel: formatTime(addHours(best.start, 4)),
     dayLabel: formatDay(best.start),
     confidence: best.confidence,
     message:
@@ -1089,6 +1093,8 @@ function findBestBaleageCutWindow(
       exists: false,
       start: "",
       end: "",
+      startLabel: "",
+      endLabel: "",
       dayLabel: "",
       confidence: "low" as const,
       message: "No validated baleage opportunities in the next 7 days. The short drying window should expand options once conditions improve."
@@ -1100,6 +1106,8 @@ function findBestBaleageCutWindow(
     exists: true,
     start: best.start.toISOString(),
     end: addHours(best.start, 4).toISOString(),
+    startLabel: formatTime(best.start),
+    endLabel: formatTime(addHours(best.start, 4)),
     dayLabel: formatDay(best.start),
     confidence: best.confidence,
     message:
