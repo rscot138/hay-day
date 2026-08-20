@@ -76,6 +76,7 @@ export type HayDecision = {
       baleTime: string;
       risk: Risk;
     };
+    note?: string;
   };
   breakdown: {
     drying: {

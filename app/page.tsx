@@ -348,6 +348,9 @@ export default function Home() {
           </Card>
         ) : null}
       </div>
+      <footer className="border-t border-border/50 py-4 text-center text-xs font-medium text-muted-foreground">
+        Powered by Homestead Commerce
+      </footer>
     </main>
   );
 }
@@ -608,6 +611,11 @@ function HomeScreen({ field, decision }: { field: FieldSettings; decision: HayDe
               <CompareTile label="With tedding" bale={decision.comparison.withTedding.baleTime} risk={decision.comparison.withTedding.risk} />
               <CompareTile label="Without" bale={decision.comparison.withoutTedding.baleTime} risk={decision.comparison.withoutTedding.risk} />
             </CardContent>
+            {decision.comparison.note ? (
+              <CardContent className="border-t pt-3">
+                <p className="text-xs leading-relaxed text-muted-foreground">{decision.comparison.note}</p>
+              </CardContent>
+            ) : null}
           </Card>
         ) : null}
 

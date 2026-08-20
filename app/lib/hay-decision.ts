@@ -149,11 +149,12 @@ function buildDryHayDecision(
       ? new Date(bestWindow.start)
       : null;
   const benefitHours = TEDDING_BENEFIT[input.field.swathDensity];
-  const teddingRecommended = dryingHours > 48 && rain.maxProbability > 30 && score >= 40 && score <= 70;
   const tedStart = cutStart ? snapOperationTime(addHours(cutStart, 22)) : null;
   const tedEnd = tedStart ? addHours(tedStart, 3) : null;
   const baleWithoutTed = cutStart ? snapOperationTime(addHours(cutStart, dryingHours)) : null;
   const baleWithTed = cutStart ? snapOperationTime(addHours(cutStart, Math.max(36, dryingHours - benefitHours))) : null;
+  const teddingTimesEqual = baleWithTed && baleWithoutTed && Math.abs(baleWithTed.getTime() - baleWithoutTed.getTime()) < 36e5;
+  const teddingRecommended = dryingHours > 48 && rain.maxProbability > 30 && score >= 40 && score <= 70 && !teddingTimesEqual;
   const riskWithoutTed = cutStart && baleWithoutTed ? labelRisk(forecastBetween(forecast, cutStart, baleWithoutTed), baleWithoutTed) : "High";
   const riskWithTed = cutStart && baleWithTed ? labelRisk(forecastBetween(forecast, cutStart, baleWithTed), baleWithTed) : "High";
 
@@ -176,6 +177,8 @@ function buildDryHayDecision(
       benefitHours,
       message: !hasActionableCut
         ? "Tedding can wait. Next step: watch for a validated cut window before planning any ted pass."
+        : teddingTimesEqual
+        ? `Tedding would not change the bale time — both scenarios land at ${baleWithoutTed ? formatDateTime(baleWithoutTed) : "—"}. Tedding causes leaf loss, so skip it when there is no working-time gain.`
         : teddingRecommended && tedStart && tedEnd
         ? `Tedding recommended ${formatDay(tedStart)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect to save ~${benefitHours} hours drying time.`
         : tedStart && tedEnd
@@ -198,7 +201,10 @@ function buildDryHayDecision(
       withoutTedding: {
         baleTime: baleWithoutTed ? formatDateTime(baleWithoutTed) : "No safe bale window",
         risk: riskWithoutTed
-      }
+      },
+      note: teddingTimesEqual
+        ? "Tedding is not recommended — the bale time is the same either way, and tedding causes leaf loss."
+        : undefined
     },
     breakdown: {
       drying: {
@@ -427,7 +433,8 @@ function buildBaleageDecision(
       withoutTedding: {
         baleTime: baleTime ? formatDateTime(baleTime) : "No safe bale window",
         risk
-      }
+      },
+      note: "Tedding is not used with baleage — the shorter drying window makes it unnecessary."
     },
     breakdown: {
       drying: {
