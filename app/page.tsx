@@ -59,7 +59,7 @@ const defaultField: FieldSettings = {
   harvestMethod: "dry_hay"
 };
 
-const tabs = ["Home", "Breakdown", "Timeline", "Tedding", "Field", "Debug"] as const;
+const tabs = ["Home", "Breakdown", "Timeline", "Tedding", "Field"] as const;
 type Tab = (typeof tabs)[number];
 
 const tabMeta: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -67,8 +67,7 @@ const tabMeta: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "Breakdown", label: "Breakdown", icon: <ListChecks className="h-4 w-4" /> },
   { id: "Timeline", label: "Forecast", icon: <CalendarDays className="h-4 w-4" /> },
   { id: "Tedding", label: "Tedding & Rake", icon: <Tractor className="h-4 w-4" /> },
-  { id: "Field", label: "Field Setup", icon: <MapPinned className="h-4 w-4" /> },
-  { id: "Debug", label: "Debug", icon: <Wheat className="h-4 w-4" /> }
+  { id: "Field", label: "Field Setup", icon: <MapPinned className="h-4 w-4" /> }
 ];
 
 type HeroTone = {
@@ -118,6 +117,7 @@ export default function Home() {
   const [result, setResult] = useState<ApiResult | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -130,6 +130,11 @@ export default function Home() {
       }
     }
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setDebugMode(params.has("debug"));
   }, []);
 
   const saveField = useCallback((next: FieldSettings) => {
@@ -224,15 +229,17 @@ export default function Home() {
   return (
     <main className="min-h-screen pb-24">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6 lg:py-7">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-card">
-              <Sprout className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
-                  Hay Windows
+        {!debugMode && (
+          <>
+            <header className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-card">
+                  <Sprout className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                      Hay Windows
                 </p>
                 <span className="rounded-full bg-secondary/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
                   {field.harvestMethod === "baleage" ? "Baleage" : "Dry hay"}
@@ -284,6 +291,8 @@ export default function Home() {
             ))}
           </div>
         </nav>
+        </>
+        )}
 
         {state.status === "locating" || state.status === "loading" ? (
           <LoadingPanel locating={state.status === "locating"} />
@@ -303,29 +312,32 @@ export default function Home() {
           </Card>
         ) : null}
 
-        {activeTab === "Home" && decision ? (
-          <HomeScreen field={field} decision={decision} />
-        ) : null}
-        {activeTab === "Breakdown" && decision ? (
-          <BreakdownScreen decision={decision} weather={result.weather} />
-        ) : null}
-        {activeTab === "Timeline" && decision && result ? (
-          <TimelineScreen decision={decision} weather={result.weather} />
-        ) : null}
-        {activeTab === "Tedding" && decision ? <TeddingScreen decision={decision} /> : null}
-        {activeTab === "Field" ? (
-          <FieldSetup
-            field={field}
-            onSave={(next) => {
-              saveField(next);
-              if (next.latitude && next.longitude) void loadDecision(next);
-            }}
-            onLocate={locateField}
-          />
-        ) : null}
-        {activeTab === "Debug" && decision ? (
+        {debugMode && decision ? (
           <DebugScreen decision={decision} />
-        ) : null}
+        ) : (
+          <>
+            {activeTab === "Home" && decision ? (
+              <HomeScreen field={field} decision={decision} />
+            ) : null}
+            {activeTab === "Breakdown" && decision ? (
+              <BreakdownScreen decision={decision} weather={result.weather} />
+            ) : null}
+            {activeTab === "Timeline" && decision && result ? (
+              <TimelineScreen decision={decision} weather={result.weather} />
+            ) : null}
+            {activeTab === "Tedding" && decision ? <TeddingScreen decision={decision} /> : null}
+            {activeTab === "Field" ? (
+              <FieldSetup
+                field={field}
+                onSave={(next) => {
+                  saveField(next);
+                  if (next.latitude && next.longitude) void loadDecision(next);
+                }}
+                onLocate={locateField}
+              />
+            ) : null}
+          </>
+        )}
 
         {!decision && state.status !== "loading" && state.status !== "locating" ? (
           <Card>
