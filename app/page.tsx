@@ -361,7 +361,10 @@ export default function Home() {
         ) : null}
       </div>
       <footer className="border-t border-border/50 py-4 text-center text-xs font-medium text-muted-foreground">
-        Powered by Homestead Commerce
+        Powered by{" "}
+        <a href="https://www.homesteadcommerce.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground transition-colors">
+          Homestead Commerce
+        </a>
       </footer>
     </main>
   );
