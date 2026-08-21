@@ -239,7 +239,7 @@ export default function Home() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
-                      Hay Windows
+                      Hay Day
                 </p>
                 <span className="rounded-full bg-secondary/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
                   {field.harvestMethod === "baleage" ? "Baleage" : "Dry hay"}
