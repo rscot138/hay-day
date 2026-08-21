@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { FieldSettings, HayDecision, DebugTrace, HourlyWeather, WeatherSummary } from "@/app/types/hay";
 import { cn } from "@/app/lib/utils";
+import { track } from "@/app/lib/analytics";
 
 type ApiState =
   | { status: "idle" | "locating" | "loading"; error?: undefined }
@@ -123,6 +124,7 @@ export default function Home() {
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
+    const hasVisited = window.localStorage.getItem("hay-day-visited");
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as FieldSettings;
@@ -132,6 +134,8 @@ export default function Home() {
       }
     }
     setHydrated(true);
+    track("app opened", { return_visit: !!hasVisited });
+    window.localStorage.setItem("hay-day-visited", "1");
   }, []);
 
   useEffect(() => {
@@ -142,6 +146,7 @@ export default function Home() {
   const saveField = useCallback((next: FieldSettings) => {
     setField(next);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    track("field saved", { crop_type: next.cropType, harvest_method: next.harvestMethod, has_name: !!next.name });
   }, []);
 
   const loadDecision = useCallback(async (nextField: FieldSettings) => {
@@ -167,6 +172,12 @@ export default function Home() {
       setResult(data);
       setUpdatedAt(new Date());
       setState({ status: "ready" });
+      track("decision generated", {
+        recommendation: data.decision.recommendation,
+        score: data.decision.score,
+        harvest_method: nextField.harvestMethod,
+        crop_type: nextField.cropType
+      });
     } catch (error) {
       setState({
         status: "error",
