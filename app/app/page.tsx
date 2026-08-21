@@ -52,11 +52,12 @@ type ApiResult = {
 const STORAGE_KEY = "hay-decision-field-v1";
 
 const defaultField: FieldSettings = {
-  name: "Current Field",
+  name: "",
   cropType: "mixed",
   swathDensity: "medium",
   conditioning: "roller",
-  harvestMethod: "dry_hay"
+  harvestMethod: "dry_hay",
+  lastCutTiming: "unknown"
 };
 
 const tabs = ["Home", "Breakdown", "Timeline", "Tedding", "Field"] as const;
@@ -317,7 +318,7 @@ export default function Home() {
         ) : (
           <>
             {activeTab === "Home" && decision ? (
-              <HomeScreen field={field} decision={decision} />
+              <HomeScreen field={field} decision={decision} onFieldChange={saveField} />
             ) : null}
             {activeTab === "Breakdown" && decision ? (
               <BreakdownScreen decision={decision} weather={result.weather} />
@@ -432,11 +433,13 @@ function ScoreRing({ score, tone }: { score: number; tone: HeroTone }) {
   );
 }
 
-function HomeScreen({ field, decision }: { field: FieldSettings; decision: HayDecision }) {
+function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; decision: HayDecision; onFieldChange: (field: FieldSettings) => void }) {
   const isBaleage = decision.harvestMethod === "baleage";
   const tone = decision.score >= 70 ? heroTones.good : decision.score >= 50 ? heroTones.caution : heroTones.bad;
   const hasCurrentWindow = decision.recommendation === "CUT NOW" || decision.recommendation === "PROCEED WITH CAUTION";
   const showUpcomingWindow = !hasCurrentWindow && decision.bestWindow.exists;
+  const [saveName, setSaveName] = useState(field.name);
+  const fieldNeedsName = !field.name;
 
   const steps = isBaleage
     ? [
@@ -637,6 +640,31 @@ function HomeScreen({ field, decision }: { field: FieldSettings; decision: HayDe
         <p className="px-1 text-xs leading-relaxed text-muted-foreground">
           Field profile: {field.cropType}, {field.swathDensity} swath, {field.conditioning} conditioning. {isBaleage ? "Baleage mode." : "Dry hay mode."}
         </p>
+
+        {fieldNeedsName ? (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground">Save this field for next time</p>
+                <p className="text-xs text-muted-foreground">Give it a name so you can come back to it later.</p>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. North 40"
+                  value={saveName}
+                  onChange={(event) => setSaveName(event.target.value)}
+                  className="w-full sm:w-40"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => onFieldChange({ ...field, name: saveName || "My Field" })}
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Save
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </section>
   );
@@ -1268,6 +1296,15 @@ function FieldSetup({
           <Select value={draft.harvestMethod} onChange={(event) => setDraft({ ...draft, harvestMethod: event.target.value as FieldSettings["harvestMethod"] })}>
             <option value="dry_hay">Dry hay</option>
             <option value="baleage">Baleage (wrapped)</option>
+          </Select>
+        </Label>
+        <Label text="Last cut timing">
+          <Select value={draft.lastCutTiming} onChange={(event) => setDraft({ ...draft, lastCutTiming: event.target.value as FieldSettings["lastCutTiming"] })}>
+            <option value="recent">Less than 20 days ago</option>
+            <option value="20-25">20–25 days ago</option>
+            <option value="25-30">25–30 days ago</option>
+            <option value="30+">30+ days ago</option>
+            <option value="unknown">Not sure</option>
           </Select>
         </Label>
         <Label text="Latitude">

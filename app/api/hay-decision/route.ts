@@ -23,11 +23,12 @@ export async function POST(request: Request) {
     }
 
     const field: FieldSettings = {
-      name: body.field?.name || "Current Field",
+      name: body.field?.name || "",
       cropType: body.field?.cropType || "mixed",
       swathDensity: body.field?.swathDensity || "medium",
       conditioning: body.field?.conditioning || "roller",
       harvestMethod: body.field?.harvestMethod || "dry_hay",
+      lastCutTiming: body.field?.lastCutTiming || "unknown",
       latitude,
       longitude
     };

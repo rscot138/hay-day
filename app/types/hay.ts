@@ -2,6 +2,7 @@ export type CropType = "alfalfa" | "grass" | "mixed";
 export type SwathDensity = "light" | "medium" | "heavy";
 export type Conditioning = "none" | "roller" | "impeller";
 export type HarvestMethod = "dry_hay" | "baleage";
+export type LastCutTiming = "recent" | "20-25" | "25-30" | "30+" | "unknown";
 export type Confidence = "high" | "medium" | "low";
 export type Risk = "Low" | "Moderate" | "High";
 
@@ -11,6 +12,7 @@ export type FieldSettings = {
   swathDensity: SwathDensity;
   conditioning: Conditioning;
   harvestMethod: HarvestMethod;
+  lastCutTiming: LastCutTiming;
   latitude?: number;
   longitude?: number;
 };
