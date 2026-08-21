@@ -440,6 +440,9 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
   const showUpcomingWindow = !hasCurrentWindow && decision.bestWindow.exists;
   const [saveName, setSaveName] = useState(field.name);
   const fieldNeedsName = !field.name;
+  const [proEmail, setProEmail] = useState("");
+  const [proName, setProName] = useState("");
+  const [proSubmitted, setProSubmitted] = useState(false);
 
   const steps = isBaleage
     ? [
@@ -640,6 +643,43 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         <p className="px-1 text-xs leading-relaxed text-muted-foreground">
           Field profile: {field.cropType}, {field.swathDensity} swath, {field.conditioning} conditioning. {isBaleage ? "Baleage mode." : "Dry hay mode."}
         </p>
+
+        <Card className="border-secondary/30 bg-secondary/5">
+          <CardContent className="p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-secondary/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                Pro features coming soon
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <ProFeature label="Confidence score" description="Deeper scoring breakdown with per-factor confidence ratings." />
+              <ProFeature label="Exact timing" description="Minute-level cut, rake, and bale timing instead of hourly windows." />
+              <ProFeature label="Multiple fields" description="Save and switch between fields without re-entering setup each time." />
+              <ProFeature label="Alerts" description="Get notified when conditions are right — or about to turn." />
+            </div>
+            {proSubmitted ? (
+              <p className="mt-4 text-sm font-semibold text-primary">Thanks — we&apos;ll be in touch.</p>
+            ) : (
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1 grid gap-2 sm:grid-cols-2">
+                  <Input placeholder="Name (optional)" value={proName} onChange={(e) => setProName(e.target.value)} />
+                  <Input placeholder="Email" type="email" value={proEmail} onChange={(e) => setProEmail(e.target.value)} />
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={!proEmail}
+                  onClick={() => {
+                    if (!proEmail) return;
+                    setProSubmitted(true);
+                  }}
+                >
+                  Want early access to Pro?
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {fieldNeedsName ? (
           <Card className="border-primary/30 bg-primary/5">
@@ -1433,5 +1473,17 @@ function MetricCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ProFeature({ label, description }: { label: string; description: string }) {
+  return (
+    <div className="flex gap-3 rounded-xl border border-border/40 bg-card/60 p-3.5">
+      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary/60" />
+      <div>
+        <p className="text-sm font-bold text-foreground">{label}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{description}</p>
+      </div>
+    </div>
   );
 }
