@@ -620,14 +620,12 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                 label="Dry Hay"
                 bale={decision.harvestComparison.dryHay.cut}
                 value2={decision.harvestComparison.dryHay.bale}
-                risk={decision.harvestComparison.dryHay.risk}
               />
               <CompareTile
                 label="Baleage"
                 bale={decision.harvestComparison.baleage.cut}
                 value2={`Bale: ${decision.harvestComparison.baleage.bale}`}
                 extra={`Wrap: ${decision.harvestComparison.baleage.wrap}`}
-                risk={decision.harvestComparison.baleage.risk}
               />
             </CardContent>
           </Card>
@@ -653,8 +651,8 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               )}
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3">
-              <CompareTile label="With tedding" bale={decision.comparison.withTedding.baleTime} risk={decision.comparison.withTedding.risk} />
-              <CompareTile label="Without" bale={decision.comparison.withoutTedding.baleTime} risk={decision.comparison.withoutTedding.risk} />
+              <CompareTile label="With tedding" bale={decision.comparison.withTedding.baleTime} />
+              <CompareTile label="Without" bale={decision.comparison.withoutTedding.baleTime} />
             </CardContent>
           </Card>
         ) : null}
@@ -1436,25 +1434,13 @@ function ActionRow({
   );
 }
 
-function CompareTile({ label, bale, value2, extra, risk }: { label: string; bale: string; value2?: string; extra?: string; risk: string }) {
+function CompareTile({ label, bale, value2, extra }: { label: string; bale: string; value2?: string; extra?: string }) {
   return (
     <div className="rounded-xl border bg-muted/25 p-3.5">
       <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className="mt-1.5 text-sm font-bold">{bale}</p>
       {value2 ? <p className="text-xs text-muted-foreground">{value2}</p> : null}
       {extra ? <p className="text-xs text-muted-foreground">{extra}</p> : null}
-      <p
-        className={cn(
-          "mt-2.5 inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
-          risk === "High"
-            ? "bg-destructive/10 text-destructive"
-            : risk === "Moderate"
-              ? "bg-secondary/25 text-secondary-foreground"
-              : "bg-primary/10 text-primary"
-        )}
-      >
-        Risk: {risk}
-      </p>
     </div>
   );
 }
