@@ -642,16 +642,20 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                 </div>
                 With vs Without Tedding
               </CardTitle>
+              {decision.tedding.recommended ? (
+                <span className="ml-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+                  Recommended
+                </span>
+              ) : (
+                <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Not Recommended
+                </span>
+              )}
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3">
               <CompareTile label="With tedding" bale={decision.comparison.withTedding.baleTime} risk={decision.comparison.withTedding.risk} />
               <CompareTile label="Without" bale={decision.comparison.withoutTedding.baleTime} risk={decision.comparison.withoutTedding.risk} />
             </CardContent>
-            {decision.comparison.note ? (
-              <CardContent className="border-t pt-3">
-                <p className="text-xs leading-relaxed text-muted-foreground">{decision.comparison.note}</p>
-              </CardContent>
-            ) : null}
           </Card>
         ) : null}
 
