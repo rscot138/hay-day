@@ -784,8 +784,14 @@ function evaluateCandidateWindow(
   if (!isOperationHour(start)) return null;
   traceChecks?.push({ label: "Rain during curing", passed: rainBeforeDryingComplete < 0.25, value: `${rainBeforeDryingComplete.toFixed(2)} in`, threshold: "< 0.25 in" });
   if (rainBeforeDryingComplete >= 0.25) return null;
-  traceChecks?.push({ label: "Drying hours in window", passed: metrics.dryingHours >= 16, value: String(metrics.dryingHours), threshold: ">= 16" });
-  if (metrics.dryingHours < 16) return null;
+
+  const noRainInForecast = rain.amount < 0.02 && rain.maxProbability < 30;
+  const noRainInExtended = getRainMetrics(first48).amount < 0.05;
+  const extendedDryingHours = getDryingMetrics(first48).dryingHours;
+  const effectiveDryingHours = noRainInForecast && noRainInExtended ? extendedDryingHours : metrics.dryingHours;
+
+  traceChecks?.push({ label: "Drying hours in window", passed: effectiveDryingHours >= 16, value: String(effectiveDryingHours), threshold: noRainInForecast && noRainInExtended ? `>= 16 (extended 48h, no rain)` : ">= 16" });
+  if (effectiveDryingHours < 16) return null;
   traceChecks?.push({ label: "Humid hours (daytime, RH>80%)", passed: humidHours <= 12, value: String(humidHours), threshold: "<= 12" });
   if (humidHours > 12) return null;
   traceChecks?.push({ label: "Field recently wet", passed: !fieldRecentlyWet, value: fieldRecentlyWet ? "yes" : "no", threshold: "no" });
@@ -807,7 +813,7 @@ function evaluateCandidateWindow(
   const timingPenalty = clamp(hoursBetween(now, start) / 24, 0, 8);
   const offHoursPenalty = !isOperationHour(end) ? 15 : 0;
   const sunContrib = metrics.sunHours * 1.4;
-  const dryContrib = metrics.dryingHours * 1.2;
+  const dryContrib = effectiveDryingHours * 1.2;
   const windContrib = metrics.averageWind;
   const rainPenContrib = rain.penalty * 1.6;
   const dewContrib = dew * 1.5;
@@ -818,7 +824,7 @@ function evaluateCandidateWindow(
     { label: "Humidity bonus", value: humidityBonus, formula: `avgHumidity=${metrics.averageHumidity.toFixed(0)}` },
     { label: "Wind bonus", value: windBonus, formula: `avgWind=${metrics.averageWind.toFixed(1)} ${metrics.averageWind >= 6 ? "\u22656 \u2192 9" : "<6 \u2192 0"}` },
     { label: "Sun contrib", value: sunContrib, formula: `sunHours(${metrics.sunHours.toFixed(1)}) \u00d7 1.4` },
-    { label: "Drying contrib", value: dryContrib, formula: `dryingHours(${metrics.dryingHours}) \u00d7 1.2` },
+    { label: "Drying contrib", value: dryContrib, formula: noRainInForecast && noRainInExtended ? `dryingHours(${effectiveDryingHours}, extended 48h) × 1.2` : `dryingHours(${metrics.dryingHours}) × 1.2` },
     { label: "Wind contrib", value: windContrib, formula: `avgWind(${metrics.averageWind.toFixed(1)})` },
     { label: "Rain penalty", value: -rainPenContrib, formula: `rainPenalty(${rain.penalty.toFixed(1)}) \u00d7 1.6` },
     { label: "Dew penalty", value: -dewContrib, formula: `dewHours(${dew}) \u00d7 1.5` },
