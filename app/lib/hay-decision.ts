@@ -736,7 +736,7 @@ function findBestCutWindow(
         ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence based on strong drying conditions before rain.`
         : best.confidence === "medium"
           ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Validated window, but keep caution for margin, humidity, or late rain risk.`
-          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are marginal, so validate before committing.`
+          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are marginal, so recheck before cutting as the forecast may shift.`
   };
 }
 

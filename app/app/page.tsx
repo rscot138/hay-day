@@ -578,33 +578,6 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
           </CardContent>
         </Card>
 
-        {decision.recommendation !== "CUT NOW" ? (
-          <Card className="border-secondary/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/20 text-secondary-foreground">
-                  <Sun className="h-4 w-4" />
-                </div>
-                Best Cut Window
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-semibold leading-snug">{decision.bestWindow.message}</p>
-              <div className="mt-3 flex items-center gap-2 text-sm">
-                <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-bold capitalize text-accent-foreground">
-                  {decision.bestWindow.confidence} confidence
-                </span>
-                {decision.bestWindow.exists ? (
-                  <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    <ArrowRight className="h-3.5 w-3.5" />
-                    <span className="font-semibold">{decision.bestWindow.startLabel}</span>
-                  </span>
-                ) : null}
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
-
         {isBaleage && decision.harvestComparison ? (
           <Card>
             <CardHeader>
