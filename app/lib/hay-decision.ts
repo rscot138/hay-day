@@ -178,7 +178,7 @@ function buildDryHayDecision(
       message: !hasActionableCut
         ? "Tedding can wait. Next step: watch for a validated cut window before planning any ted pass."
         : teddingTimesEqual
-        ? `Tedding would not change the bale time — both scenarios land at ${baleWithoutTed ? formatDateTime(baleWithoutTed) : "—"}. Tedding causes leaf loss, so skip it when there is no working-time gain.`
+        ? `Tedding would not change the bale time. Both scenarios land at ${baleWithoutTed ? formatDateTime(baleWithoutTed) : "—"}. Tedding causes leaf loss, so skip it when there is no working-time gain.`
         : teddingRecommended && tedStart && tedEnd
         ? `Tedding recommended ${formatDay(tedStart)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect to save ~${benefitHours} hours drying time.`
         : tedStart && tedEnd
@@ -203,7 +203,7 @@ function buildDryHayDecision(
         risk: riskWithoutTed
       },
       note: teddingTimesEqual
-        ? "Tedding is not recommended — the bale time is the same either way, and tedding causes leaf loss."
+        ? "Tedding is not recommended. The bale time is the same either way, and tedding causes leaf loss."
         : undefined
     },
     breakdown: {
@@ -434,7 +434,7 @@ function buildBaleageDecision(
         baleTime: baleTime ? formatDateTime(baleTime) : "No safe bale window",
         risk
       },
-      note: "Tedding is not used with baleage — the shorter drying window makes it unnecessary."
+      note: "Tedding is not used with baleage. The shorter drying window makes it unnecessary."
     },
     breakdown: {
       drying: {

@@ -1034,11 +1034,16 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
               </div>
               Tedding &amp; Raking
             </CardTitle>
+            {!decision.tedding.recommended ? (
+              <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Not Recommended
+              </span>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xl font-bold leading-snug tracking-tight">{decision.tedding.message}</p>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Tedding is never required — it is a time-saving option when weather windows are tight. But tedding causes leaf loss and crop damage, so skip it when conditions allow. Raking is always required to form windrows before baling.
+              Tedding is never required. It is a time-saving option when weather windows are tight, but it causes leaf loss and crop damage, so skip it when conditions allow. Raking is always required to form windrows before baling.
             </p>
           </CardContent>
         </Card>
