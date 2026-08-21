@@ -21,6 +21,7 @@ import {
   RefreshCw,
   Scissors,
   Settings,
+  Share2,
   Shield,
   Shovel,
   Sprout,
@@ -535,7 +536,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                 {decision.recommendation}
               </p>
             </div>
-            <ScoreRing score={decision.score} tone={tone} />
+            <div className="flex items-center gap-3">
+              <ScoreRing score={decision.score} tone={tone} />
+              <ShareButton label={decision.recommendation} score={decision.score} />
+            </div>
           </div>
           <div className="relative mt-6 grid gap-2 sm:grid-cols-2">
             {decision.reasons.map((reason) => (
@@ -1485,5 +1489,37 @@ function ProFeature({ label, description }: { label: string; description: string
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{description}</p>
       </div>
     </div>
+  );
+}
+
+function ShareButton({ label, score }: { label: string; score: number }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const text = `Hay Day says: ${label} (Score: ${score}/100) — Check your field at`;
+    const url = "https://hayday.homesteadcommerce.com";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Hay Day", text, url });
+      } catch {
+        // user cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleShare}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white/70 transition-colors hover:bg-white/25 hover:text-white"
+      title="Share this result"
+    >
+      {copied ? <CheckCircle2 className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+    </button>
   );
 }
