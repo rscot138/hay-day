@@ -651,7 +651,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               )}
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3">
-              <CompareTile label="With tedding" bale={decision.comparison.withTedding.baleTime} />
+              <CompareTile
+                label="With tedding"
+                bale={decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime ? "No change" : decision.comparison.withTedding.baleTime}
+              />
               <CompareTile label="Without" bale={decision.comparison.withoutTedding.baleTime} />
             </CardContent>
           </Card>
@@ -1075,8 +1078,8 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
             <ActionRow icon={<Clock className="h-4 w-4" />} label="Tedding window" value={decision.tedding.window} />
             <ActionRow icon={<Timer className="h-4 w-4" />} label="Saved time" value={`~${decision.tedding.benefitHours} hours`} />
             <ActionRow icon={<Wind className="h-4 w-4" />} label="Rake" value={decision.timeline.rake} />
-            <ActionRow icon={<Waves className="h-4 w-4" />} label="With tedding" value={`${decision.comparison.withTedding.baleTime}, ${decision.comparison.withTedding.risk} risk`} />
-            <ActionRow icon={<CloudRain className="h-4 w-4" />} label="Without" value={`${decision.comparison.withoutTedding.baleTime}, ${decision.comparison.withoutTedding.risk} risk`} muted />
+            <ActionRow icon={<Waves className="h-4 w-4" />} label="With tedding" value={decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime ? "No change" : decision.comparison.withTedding.baleTime} />
+            <ActionRow icon={<CloudRain className="h-4 w-4" />} label="Without" value={decision.comparison.withoutTedding.baleTime} muted />
           </CardContent>
         </Card>
       )}
