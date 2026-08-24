@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { CloudRain, Sprout, Wheat, Wind, CheckCircle2 } from "lucide-react";
+import { Sprout, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
@@ -23,46 +23,29 @@ export default function LandingPage() {
         </div>
 
         <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-          Know if today is a{" "}
-          <span className="text-secondary">Hay Day</span>.
+          Cut hay with{" "}
+          <span className="text-secondary">confidence</span>.
         </h1>
 
-        <p className="mt-5 max-w-xl text-lg text-white/70">
-          Field-specific hay cutting decisions in under 10 seconds.
+        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/70">
+          Get a clear cut/no-cut decision, a full drying timeline, and a confidence-backed recommendation based on real weather conditions.
         </p>
 
         <Button asChild className="mt-8 rounded-xl px-8 py-6 text-base font-bold shadow-lift">
           <Link href="/app">Check Your Field</Link>
         </Button>
 
-        <div className="mt-20 grid w-full max-w-3xl gap-4 sm:grid-cols-3">
-          <Feature
-            icon={<Wheat className="h-5 w-5" />}
-            title="Dry hay + baleage"
-            description="Supports both harvest methods with tailored scoring."
-          />
-          <Feature
-            icon={<CloudRain className="h-5 w-5" />}
-            title="Weather-based scoring"
-            description="Drying windows, rain risk, and humidity scored against your field."
-          />
-          <Feature
-            icon={<Wind className="h-5 w-5" />}
-            title="Built for real operations"
-            description="Cut, ted, rake, and bale timelines — not just a weather app."
-          />
+        <div className="mt-14 flex flex-col items-start gap-3 text-left text-sm text-white/80">
+          <Bullet>Know if you should cut now or wait</Bullet>
+          <Bullet>See your full cut, rake, and bale timeline</Bullet>
+          <Bullet>Understand your weather risk before you commit</Bullet>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/60">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-secondary" /> Free — no account needed
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-secondary" /> Live forecast data
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-secondary" /> Your exact field location
-          </span>
+        <div className="mt-16 w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm">
+          <p className="text-xs font-bold uppercase tracking-widest text-secondary">Coming soon</p>
+          <p className="mt-2 text-sm leading-relaxed text-white/70">
+            Track your harvest and generate a shareable hay record backed by real weather data, so you can stand behind every cutting.
+          </p>
         </div>
       </div>
 
@@ -76,14 +59,11 @@ export default function LandingPage() {
   );
 }
 
-function Feature({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+function Bullet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/10 p-5 text-left shadow-card backdrop-blur-sm">
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 text-white">
-        {icon}
-      </div>
-      <p className="text-sm font-bold text-white">{title}</p>
-      <p className="mt-1 text-sm leading-relaxed text-white/70">{description}</p>
-    </div>
+    <span className="flex items-center gap-2.5">
+      <CheckCircle2 className="h-4 w-4 shrink-0 text-secondary" />
+      {children}
+    </span>
   );
 }
