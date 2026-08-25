@@ -284,8 +284,8 @@ export default function Home() {
           </div>
         </header>
 
-        <nav className="timeline-scroll -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          <div className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-card p-1 shadow-card">
+        <nav className="-mx-4 px-4 pb-1 sm:mx-0 sm:px-0">
+          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-border/60 bg-card p-1 shadow-card">
             {tabMeta.map((tab) => (
               <button
                 key={tab.id}
@@ -1494,7 +1494,7 @@ function LocationModal({
             </div>
             <div className="mt-3 flex gap-2">
               <Input
-                placeholder="e.g. Springfield, IL"
+                placeholder="e.g. 1234 County Rd 200, Springfield, IL"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setSearchError(null); }}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
