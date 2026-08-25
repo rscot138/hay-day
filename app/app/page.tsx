@@ -1292,93 +1292,238 @@ function FieldSetup({
   onLocate: () => void;
 }) {
   const [draft, setDraft] = useState<FieldSettings>(field);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [savedRecently, setSavedRecently] = useState(false);
 
   useEffect(() => setDraft(field), [field]);
 
+  const updateAndSave = (next: FieldSettings) => {
+    setDraft(next);
+    onSave(next);
+    setSavedRecently(true);
+    setTimeout(() => setSavedRecently(false), 2000);
+  };
+
+  const hasLocation = Number.isFinite(draft.latitude) && Number.isFinite(draft.longitude);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Settings className="h-4 w-4" />
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Settings className="h-4 w-4" />
+            </div>
+            Field Setup
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <Label text="Field name">
+            <Input placeholder="e.g. North 40" value={draft.name} onChange={(event) => updateAndSave({ ...draft, name: event.target.value })} />
+          </Label>
+
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold">Field Location</p>
+                <p className="text-xs text-muted-foreground">
+                  {hasLocation ? "Using current location" : "No location set"}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowLocationModal(true)}>
+                Change
+              </Button>
+            </div>
           </div>
-          Field Setup
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2">
-        <Label text="Field name">
-          <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-        </Label>
-        <Label text="Crop type">
-          <Select value={draft.cropType} onChange={(event) => setDraft({ ...draft, cropType: event.target.value as FieldSettings["cropType"] })}>
-            <option value="alfalfa">Alfalfa</option>
-            <option value="grass">Grass</option>
-            <option value="mixed">Mixed</option>
-          </Select>
-        </Label>
-        <Label text="Swath density">
-          <Select value={draft.swathDensity} onChange={(event) => setDraft({ ...draft, swathDensity: event.target.value as FieldSettings["swathDensity"] })}>
-            <option value="light">Light</option>
-            <option value="medium">Medium</option>
-            <option value="heavy">Heavy</option>
-          </Select>
-        </Label>
-        <Label text="Conditioning">
-          <Select value={draft.conditioning} onChange={(event) => setDraft({ ...draft, conditioning: event.target.value as FieldSettings["conditioning"] })}>
-            <option value="none">None</option>
-            <option value="roller">Roller</option>
-            <option value="impeller">Impeller</option>
-          </Select>
-        </Label>
-        <Label text="Harvest method">
-          <Select value={draft.harvestMethod} onChange={(event) => setDraft({ ...draft, harvestMethod: event.target.value as FieldSettings["harvestMethod"] })}>
-            <option value="dry_hay">Dry hay</option>
-            <option value="baleage">Baleage (wrapped)</option>
-          </Select>
-        </Label>
-        <Label text="Last cut timing">
-          <Select value={draft.lastCutTiming} onChange={(event) => setDraft({ ...draft, lastCutTiming: event.target.value as FieldSettings["lastCutTiming"] })}>
-            <option value="recent">Less than 20 days ago</option>
-            <option value="20-25">20–25 days ago</option>
-            <option value="25-30">25–30 days ago</option>
-            <option value="30+">30+ days ago</option>
-            <option value="unknown">Not sure</option>
-          </Select>
-        </Label>
-        <Label text="Latitude">
-          <Input
-            inputMode="decimal"
-            value={draft.latitude ?? ""}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                latitude: event.target.value === "" ? undefined : Number(event.target.value)
-              })
-            }
-          />
-        </Label>
-        <Label text="Longitude">
-          <Input
-            inputMode="decimal"
-            value={draft.longitude ?? ""}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                longitude: event.target.value === "" ? undefined : Number(event.target.value)
-              })
-            }
-          />
-        </Label>
-        <div className="flex flex-col gap-2 md:col-span-2 sm:flex-row">
-          <Button onClick={() => onSave(draft)}>
-            <CheckCircle2 className="h-4 w-4" /> Save field
-          </Button>
-          <Button variant="outline" onClick={onLocate}>
-            <Compass className="h-4 w-4" /> Use current location
-          </Button>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Label text="Crop type">
+              <p className="text-xs text-muted-foreground mb-1.5">Affects drying rate and timing</p>
+              <Select value={draft.cropType} onChange={(event) => updateAndSave({ ...draft, cropType: event.target.value as FieldSettings["cropType"] })}>
+                <option value="alfalfa">Alfalfa</option>
+                <option value="grass">Grass</option>
+                <option value="mixed">Mixed</option>
+              </Select>
+            </Label>
+            <Label text="Harvest method">
+              <Select value={draft.harvestMethod} onChange={(event) => updateAndSave({ ...draft, harvestMethod: event.target.value as FieldSettings["harvestMethod"] })}>
+                <option value="dry_hay">Dry hay</option>
+                <option value="baleage">Baleage (wrapped)</option>
+              </Select>
+            </Label>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronRight className={cn("h-4 w-4 transition-transform", showAdvanced && "rotate-90")} />
+            Refine drying assumptions
+          </button>
+
+          {showAdvanced ? (
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Label text="Swath density">
+                <p className="text-xs text-muted-foreground mb-1.5">Thicker swaths dry slower</p>
+                <Select value={draft.swathDensity} onChange={(event) => updateAndSave({ ...draft, swathDensity: event.target.value as FieldSettings["swathDensity"] })}>
+                  <option value="light">Light</option>
+                  <option value="medium">Medium</option>
+                  <option value="heavy">Heavy</option>
+                </Select>
+              </Label>
+              <Label text="Conditioning">
+                <p className="text-xs text-muted-foreground mb-1.5">Impacts how quickly hay dries</p>
+                <Select value={draft.conditioning} onChange={(event) => updateAndSave({ ...draft, conditioning: event.target.value as FieldSettings["conditioning"] })}>
+                  <option value="none">None</option>
+                  <option value="roller">Roller</option>
+                  <option value="impeller">Impeller</option>
+                </Select>
+              </Label>
+              <Label text="Last cut timing">
+                <Select value={draft.lastCutTiming} onChange={(event) => updateAndSave({ ...draft, lastCutTiming: event.target.value as FieldSettings["lastCutTiming"] })}>
+                  <option value="recent">Less than 20 days ago</option>
+                  <option value="20-25">20-25 days ago</option>
+                  <option value="25-30">25-30 days ago</option>
+                  <option value="30+">30+ days ago</option>
+                  <option value="unknown">Not sure</option>
+                </Select>
+              </Label>
+            </div>
+          ) : null}
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {savedRecently ? (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                <span className="font-medium text-primary">Saved</span>
+              </>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+
+      {showLocationModal ? (
+        <LocationModal
+          field={draft}
+          onSelect={(lat, lng) => {
+            updateAndSave({ ...draft, latitude: lat, longitude: lng });
+            setShowLocationModal(false);
+          }}
+          onLocate={() => {
+            setShowLocationModal(false);
+            onLocate();
+          }}
+          onClose={() => setShowLocationModal(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function LocationModal({
+  field,
+  onSelect,
+  onLocate,
+  onClose
+}: {
+  field: FieldSettings;
+  onSelect: (lat: number, lng: number) => void;
+  onLocate: () => void;
+  onClose: () => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`, {
+        headers: { "User-Agent": "HayDayApp/1.0" }
+      });
+      const results = await res.json();
+      if (results.length > 0) {
+        onSelect(parseFloat(results[0].lat), parseFloat(results[0].lon));
+      } else {
+        setSearchError("No results found. Try a different search.");
+        setSearching(false);
+      }
+    } catch {
+      setSearchError("Search failed. Try again.");
+      setSearching(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl bg-card p-5 shadow-lift sm:p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-lg font-bold">Set field location</p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose how to set your field coordinates.</p>
+
+        <div className="mt-5 grid gap-3">
+          <button
+            type="button"
+            onClick={onLocate}
+            className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Compass className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">Use current location</p>
+              <p className="text-xs text-muted-foreground">Detect via GPS on your device</p>
+            </div>
+          </button>
+
+          <div className="rounded-xl border p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">Search by location</p>
+                <p className="text-xs text-muted-foreground">Enter an address or town name</p>
+              </div>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Input
+                placeholder="e.g. Springfield, IL"
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setSearchError(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+              />
+              <Button size="sm" onClick={handleSearch} disabled={searching || !searchQuery.trim()}>
+                {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+              </Button>
+            </div>
+            {searchError ? <p className="mt-2 text-xs text-destructive">{searchError}</p> : null}
+          </div>
+
+          <div className="rounded-xl border border-dashed p-4 opacity-60">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <MapPinned className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">Drop a pin on map</p>
+                <p className="text-xs text-muted-foreground">Coming soon</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="mt-5 flex justify-end">
+          <Button variant="ghost" onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
