@@ -17,7 +17,9 @@ import {
   Loader2,
   MapPin,
   MapPinned,
+  Menu,
   Moon,
+  X,
   RefreshCw,
   Scissors,
   Settings,
@@ -116,6 +118,7 @@ const heroTones: Record<"good" | "caution" | "bad", HeroTone> = {
 export default function Home() {
   const [field, setField] = useState<FieldSettings>(defaultField);
   const [activeTab, setActiveTab] = useState<Tab>("Home");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [state, setState] = useState<ApiState>({ status: "idle" });
   const [result, setResult] = useState<ApiResult | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -222,6 +225,16 @@ export default function Home() {
   }, [field, loadDecision, saveField]);
 
   useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("nav")) setMenuOpen(false);
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [menuOpen]);
+
+  useEffect(() => {
     if (!hydrated) return;
     if (Number.isFinite(field.latitude) && Number.isFinite(field.longitude)) {
       void loadDecision(field);
@@ -285,7 +298,8 @@ export default function Home() {
         </header>
 
         <nav className="-mx-4 px-4 pb-1 sm:mx-0 sm:px-0">
-          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-border/60 bg-card p-1 shadow-card">
+          {/* Desktop tabs */}
+          <div className="hidden sm:flex items-center gap-1 rounded-xl border border-border/60 bg-card p-1 shadow-card">
             {tabMeta.map((tab) => (
               <button
                 key={tab.id}
@@ -302,6 +316,47 @@ export default function Home() {
                 {tab.label}
               </button>
             ))}
+          </div>
+
+          {/* Mobile hamburger */}
+          <div className="relative sm:hidden">
+            <div className="flex items-center justify-between rounded-xl border border-border/60 bg-card px-3 py-2 shadow-card">
+              <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                {tabMeta.find((t) => t.id === activeTab)?.icon}
+                {tabMeta.find((t) => t.id === activeTab)?.label}
+              </span>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </button>
+            </div>
+
+            {menuOpen && (
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-lg">
+                {tabMeta.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setMenuOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center gap-2 px-3 py-2.5 text-sm font-semibold transition-colors",
+                      activeTab === tab.id
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </nav>
         </>
@@ -1442,18 +1497,25 @@ function LocationModal({
     setSearching(true);
     setSearchError(null);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`, {
-        headers: { "User-Agent": "HayDayApp/1.0" }
+      const params = new URLSearchParams({
+        format: "json",
+        q: searchQuery.trim(),
+        limit: "1",
+        addressdetails: "1"
       });
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+        headers: { "Accept": "application/json" }
+      });
+      if (!res.ok) throw new Error("Search service unavailable");
       const results = await res.json();
       if (results.length > 0) {
         onSelect(parseFloat(results[0].lat), parseFloat(results[0].lon));
       } else {
-        setSearchError("No results found. Try a different search.");
+        setSearchError("No results found. Try a city and state (e.g. Springfield, IL).");
         setSearching(false);
       }
     } catch {
-      setSearchError("Search failed. Try again.");
+      setSearchError("Search failed. Try again or use current location.");
       setSearching(false);
     }
   };
