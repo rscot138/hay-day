@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -1491,6 +1492,20 @@ function LocationModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [view, setView] = useState<"menu" | "map">("menu");
+
+  const MapPicker = useMemo(
+    () =>
+      dynamic(() => import("@/components/MapPicker"), {
+        ssr: false,
+        loading: () => (
+          <div className="flex h-[280px] items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-sm text-muted-foreground">
+            Loading map…
+          </div>
+        ),
+      }),
+    []
+  );
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -1526,64 +1541,100 @@ function LocationModal({
         className="w-full max-w-md rounded-2xl bg-card p-5 shadow-lift sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-lg font-bold">Set field location</p>
-        <p className="mt-1 text-sm text-muted-foreground">Choose how to set your field coordinates.</p>
+        {view === "menu" ? (
+          <>
+            <p className="text-lg font-bold">Set field location</p>
+            <p className="mt-1 text-sm text-muted-foreground">Choose how to set your field coordinates.</p>
 
-        <div className="mt-5 grid gap-3">
-          <button
-            type="button"
-            onClick={onLocate}
-            className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Compass className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold">Use current location</p>
-              <p className="text-xs text-muted-foreground">Detect via GPS on your device</p>
-            </div>
-          </button>
+            <div className="mt-5 grid gap-3">
+              <button
+                type="button"
+                onClick={onLocate}
+                className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Compass className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Use current location</p>
+                  <p className="text-xs text-muted-foreground">Detect via GPS on your device</p>
+                </div>
+              </button>
 
-          <div className="rounded-xl border p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <MapPin className="h-5 w-5" />
+              <div className="rounded-xl border p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">Search by location</p>
+                    <p className="text-xs text-muted-foreground">Enter an address or town name</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Input
+                    placeholder="e.g. Springfield, IL"
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setSearchError(null); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                  />
+                  <Button size="sm" onClick={handleSearch} disabled={searching || !searchQuery.trim()}>
+                    {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+                  </Button>
+                </div>
+                {searchError ? <p className="mt-2 text-xs text-destructive">{searchError}</p> : null}
               </div>
+
+              <button
+                type="button"
+                onClick={() => setView("map")}
+                className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <MapPinned className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Drop a pin on map</p>
+                  <p className="text-xs text-muted-foreground">Tap the map to set your field location</p>
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <Button variant="ghost" onClick={onClose}>Close</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold">Search by location</p>
-                <p className="text-xs text-muted-foreground">Enter an address or town name</p>
+                <p className="text-lg font-bold">Drop a pin</p>
+                <p className="text-sm text-muted-foreground">Tap anywhere on the map to mark your field.</p>
               </div>
+              <button
+                type="button"
+                onClick={() => setView("menu")}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="mt-3 flex gap-2">
-              <Input
-                placeholder="e.g. 1234 County Rd 200, Springfield, IL"
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setSearchError(null); }}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+
+            <div className="mt-4">
+              <MapPicker
+                initialLat={field.latitude}
+                initialLng={field.longitude}
+                onConfirm={(lat, lng) => {
+                  onSelect(lat, lng);
+                }}
               />
-              <Button size="sm" onClick={handleSearch} disabled={searching || !searchQuery.trim()}>
-                {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
-              </Button>
             </div>
-            {searchError ? <p className="mt-2 text-xs text-destructive">{searchError}</p> : null}
-          </div>
 
-          <div className="rounded-xl border border-dashed p-4 opacity-60">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                <MapPinned className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-bold">Drop a pin on map</p>
-                <p className="text-xs text-muted-foreground">Coming soon</p>
-              </div>
+            <div className="mt-4 flex justify-end">
+              <Button variant="ghost" onClick={() => setView("menu")}>Back</Button>
             </div>
-          </div>
-        </div>
-
-        <div className="mt-5 flex justify-end">
-          <Button variant="ghost" onClick={onClose}>Close</Button>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
