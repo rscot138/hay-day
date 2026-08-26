@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -36,6 +36,23 @@ function FlyTo({ position }: { position: [number, number] | null }) {
   return null;
 }
 
+function Geolocate({ onFound }: { onFound: (pos: [number, number]) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        onFound(loc);
+        map.flyTo(loc, 12);
+      },
+      () => {},
+      { enableHighAccuracy: false, timeout: 5000 }
+    );
+  }, [map, onFound]);
+  return null;
+}
+
 export default function MapPicker({
   initialLat,
   initialLng,
@@ -66,11 +83,10 @@ export default function MapPicker({
           zoomControl={false}
           attributionControl={false}
         >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <ClickHandler onPosition={setMarker} />
           <FlyTo position={marker} />
+          {!hasInitial && <Geolocate onFound={(pos) => { setMarker(pos); }} />}
           {marker ? <Marker position={marker} icon={pinIcon} /> : null}
         </MapContainer>
       </div>
@@ -84,7 +100,7 @@ export default function MapPicker({
         onClick={() => marker && onConfirm(marker[0], marker[1])}
         className="w-full"
       >
-        {marker ? `Use this location` : "Drop a pin first"}
+        {marker ? "Use this location" : "Drop a pin first"}
       </Button>
     </div>
   );

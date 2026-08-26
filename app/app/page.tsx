@@ -1497,9 +1497,6 @@ function LocationModal({
   onLocate: () => void;
   onClose: () => void;
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
   const [view, setView] = useState<"menu" | "map">("menu");
 
   const MapPicker = useMemo(
@@ -1514,27 +1511,6 @@ function LocationModal({
       }),
     []
   );
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setSearching(true);
-    setSearchError(null);
-    try {
-      const res = await fetch(`/api/geocode?address=${encodeURIComponent(searchQuery.trim())}`);
-      if (!res.ok) throw new Error("Search service unavailable");
-      const data = await res.json();
-      if (data.status === "OK" && data.results?.length > 0) {
-        const loc = data.results[0].geometry.location;
-        onSelect(loc.lat, loc.lng);
-      } else {
-        setSearchError("No results found. Try a city and state, or drop a pin on the map.");
-        setSearching(false);
-      }
-    } catch {
-      setSearchError("Search failed. Try again or use current location.");
-      setSearching(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4" onClick={onClose}>
@@ -1561,30 +1537,6 @@ function LocationModal({
                   <p className="text-xs text-muted-foreground">Detect via GPS on your device</p>
                 </div>
               </button>
-
-              <div className="rounded-xl border p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold">Search by location</p>
-                    <p className="text-xs text-muted-foreground">Enter an address or town name</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <Input
-                    placeholder="e.g. Springfield, IL"
-                    value={searchQuery}
-                    onChange={(e) => { setSearchQuery(e.target.value); setSearchError(null); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                  />
-                  <Button size="sm" onClick={handleSearch} disabled={searching || !searchQuery.trim()}>
-                    {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
-                  </Button>
-                </div>
-                {searchError ? <p className="mt-2 text-xs text-destructive">{searchError}</p> : null}
-              </div>
 
               <button
                 type="button"
