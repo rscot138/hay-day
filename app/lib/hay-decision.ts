@@ -164,6 +164,10 @@ function buildDryHayDecision(
     rakeTime && primaryBaleTime && Math.abs(primaryBaleTime.getTime() - rakeTime.getTime()) < 36e5
       ? snapOperationTime(addHours(primaryBaleTime, 1))
       : primaryBaleTime;
+  const withoutTedBaleTime =
+    rakeTime && baleWithoutTed && Math.abs(baleWithoutTed.getTime() - rakeTime.getTime()) < 36e5
+      ? snapOperationTime(addHours(baleWithoutTed, 1))
+      : baleWithoutTed;
 
   return {
     score: finalScore,
@@ -199,7 +203,7 @@ function buildDryHayDecision(
         risk: riskWithTed
       },
       withoutTedding: {
-        baleTime: baleWithoutTed ? formatDateTime(baleWithoutTed) : "No safe bale window",
+        baleTime: withoutTedBaleTime ? formatDateTime(withoutTedBaleTime) : "No safe bale window",
         risk: riskWithoutTed
       },
       note: teddingTimesEqual
