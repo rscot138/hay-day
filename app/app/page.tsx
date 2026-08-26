@@ -1520,25 +1520,12 @@ function LocationModal({
     setSearching(true);
     setSearchError(null);
     try {
-      const queries = [searchQuery.trim()];
-      const parts = searchQuery.trim().split(/\s*,\s*/);
-      if (parts.length >= 2) queries.push(parts.slice(-2).join(", "));
-      if (parts.length >= 1) queries.push(parts[parts.length - 1]);
-
-      let results: unknown[] = [];
-      for (const q of queries) {
-        const params = new URLSearchParams({ format: "json", q, limit: "1", addressdetails: "1" });
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-          headers: { "Accept": "application/json" }
-        });
-        if (!res.ok) throw new Error("Search service unavailable");
-        results = await res.json();
-        if (results.length > 0) break;
-      }
-
-      if (results.length > 0) {
-        const r = results[0] as { lat: string; lon: string };
-        onSelect(parseFloat(r.lat), parseFloat(r.lon));
+      const res = await fetch(`/api/geocode?address=${encodeURIComponent(searchQuery.trim())}`);
+      if (!res.ok) throw new Error("Search service unavailable");
+      const data = await res.json();
+      if (data.status === "OK" && data.results?.length > 0) {
+        const loc = data.results[0].geometry.location;
+        onSelect(loc.lat, loc.lng);
       } else {
         setSearchError("No results found. Try a city and state, or drop a pin on the map.");
         setSearching(false);
