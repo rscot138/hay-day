@@ -1186,9 +1186,11 @@ function snapOperationTime(date: Date, hourly?: HourlyWeather[]): Date {
   const snapped = new Date(date);
   const h = snapped.getHours();
   if (h < 10) snapped.setHours(10, 0, 0, 0);
-  if (h > 17) {
+  else if (h > 17) {
     snapped.setDate(snapped.getDate() + 1);
     snapped.setHours(10, 0, 0, 0);
+  } else {
+    snapped.setMinutes(0, 0, 0);
   }
   if (hourly) {
     const match = hourly.find((hw) => new Date(hw.time).getTime() === snapped.getTime());
