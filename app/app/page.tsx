@@ -673,6 +673,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                 <span className="ml-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
                   Recommended
                 </span>
+              ) : decision.tedding.benefitHours > 0 ? (
+                <span className="ml-1 inline-flex rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                  Saves ~{decision.tedding.benefitHours}h
+                </span>
               ) : (
                 <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   Not Recommended
@@ -1063,7 +1067,11 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
               </div>
               Tedding &amp; Raking
             </CardTitle>
-            {!decision.tedding.recommended ? (
+            {!decision.tedding.recommended && decision.tedding.benefitHours > 0 ? (
+              <span className="ml-1 inline-flex rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                Saves ~{decision.tedding.benefitHours}h
+              </span>
+            ) : !decision.tedding.recommended ? (
               <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 Not Recommended
               </span>
