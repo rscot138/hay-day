@@ -180,9 +180,9 @@ function buildDryHayDecision(
         : teddingTimesEqual
         ? `Tedding would not change the bale time. Both scenarios land at ${baleWithoutTed ? formatDateTime(baleWithoutTed) : "—"}. Tedding causes leaf loss, so skip it when there is no working-time gain.`
         : teddingRecommended && tedStart && tedEnd
-        ? `Tedding recommended ${formatDay(tedStart)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect to save ~${benefitHours} hours drying time.`
+        ? `Tedding recommended ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect to save ~${benefitHours} hours drying time.`
         : tedStart && tedEnd
-          ? `Tedding is optional. Best window to double-check is ${formatDay(tedStart)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are ~${benefitHours} hours if the windrow needs help.`
+          ? `Tedding is optional. Best window to double-check is ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are ~${benefitHours} hours if the windrow needs help.`
           : "Tedding is optional, but there is no valid cut window to attach it to yet."
     },
     timeline: {
@@ -729,14 +729,14 @@ function findBestCutWindow(
     end: addHours(best.start, 4).toISOString(),
     startLabel: formatTime(best.start),
     endLabel: formatTime(addHours(best.start, 4)),
-    dayLabel: formatDay(best.start),
+    dayLabel: formatDay(best.start, input.weather.timezone),
     confidence: best.confidence,
     message:
       best.confidence === "high"
-        ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence based on strong drying conditions before rain.`
+        ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence based on strong drying conditions before rain.`
         : best.confidence === "medium"
-          ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Validated window, but keep caution for margin, humidity, or late rain risk.`
-          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are marginal, so recheck before cutting as the forecast may shift.`
+          ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Validated window, but keep caution for margin, humidity, or late rain risk.`
+          : `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are marginal, so recheck before cutting as the forecast may shift.`
   };
 }
 
@@ -1114,14 +1114,14 @@ function findBestBaleageCutWindow(
     end: addHours(best.start, 4).toISOString(),
     startLabel: formatTime(best.start),
     endLabel: formatTime(addHours(best.start, 4)),
-    dayLabel: formatDay(best.start),
+    dayLabel: formatDay(best.start, input.weather.timezone),
     confidence: best.confidence,
     message:
       best.confidence === "high"
-        ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence — short drying works well with baleage.`
+        ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence — short drying works well with baleage.`
         : best.confidence === "medium"
-          ? `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are workable for baleage with moderate caution.`
-          : `${prefix}: ${formatDay(best.start)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Marginal window, but baleage may still work — validate first.`
+          ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are workable for baleage with moderate caution.`
+          : `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Marginal window, but baleage may still work — validate first.`
   };
 }
 
@@ -1216,12 +1216,19 @@ function formatDateTime(date: Date) {
   }).format(date);
 }
 
-function formatDay(date: Date) {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (date.toDateString() === new Date().toDateString()) return "Today";
-  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-  return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(date);
+function getDateKey(date: Date, tz: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(date);
+}
+
+function formatDay(date: Date, tz: string) {
+  const todayKey = getDateKey(new Date(), tz);
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowKey = getDateKey(tomorrowDate, tz);
+  const dateKey = getDateKey(date, tz);
+  if (dateKey === todayKey) return "Today";
+  if (dateKey === tomorrowKey) return "Tomorrow";
+  return new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: tz }).format(date);
 }
 
 function formatTime(date: Date) {
