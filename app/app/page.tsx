@@ -620,6 +620,31 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
       )}
 
       <div className="grid gap-4">
+        {fieldNeedsName ? (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground">Save this field for next time</p>
+                <p className="text-xs text-muted-foreground">Give it a name so you can come back to it later.</p>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. North 40"
+                  value={saveName}
+                  onChange={(event) => setSaveName(event.target.value)}
+                  className="w-full sm:w-40"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => onFieldChange({ ...field, name: saveName || "My Field" })}
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Save
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -733,31 +758,6 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
             )}
           </CardContent>
         </Card>
-
-        {fieldNeedsName ? (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-foreground">Save this field for next time</p>
-                <p className="text-xs text-muted-foreground">Give it a name so you can come back to it later.</p>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="e.g. North 40"
-                  value={saveName}
-                  onChange={(event) => setSaveName(event.target.value)}
-                  className="w-full sm:w-40"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => onFieldChange({ ...field, name: saveName || "My Field" })}
-                >
-                  <CheckCircle2 className="h-4 w-4" /> Save
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
       </div>
     </section>
   );
