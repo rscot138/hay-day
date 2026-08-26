@@ -1520,21 +1520,27 @@ function LocationModal({
     setSearching(true);
     setSearchError(null);
     try {
-      const params = new URLSearchParams({
-        format: "json",
-        q: searchQuery.trim(),
-        limit: "1",
-        addressdetails: "1"
-      });
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-        headers: { "Accept": "application/json" }
-      });
-      if (!res.ok) throw new Error("Search service unavailable");
-      const results = await res.json();
+      const queries = [searchQuery.trim()];
+      const parts = searchQuery.trim().split(/\s*,\s*/);
+      if (parts.length >= 2) queries.push(parts.slice(-2).join(", "));
+      if (parts.length >= 1) queries.push(parts[parts.length - 1]);
+
+      let results: unknown[] = [];
+      for (const q of queries) {
+        const params = new URLSearchParams({ format: "json", q, limit: "1", addressdetails: "1" });
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+          headers: { "Accept": "application/json" }
+        });
+        if (!res.ok) throw new Error("Search service unavailable");
+        results = await res.json();
+        if (results.length > 0) break;
+      }
+
       if (results.length > 0) {
-        onSelect(parseFloat(results[0].lat), parseFloat(results[0].lon));
+        const r = results[0] as { lat: string; lon: string };
+        onSelect(parseFloat(r.lat), parseFloat(r.lon));
       } else {
-        setSearchError("No results found. Try a city and state (e.g. Springfield, IL).");
+        setSearchError("No results found. Try a city and state, or drop a pin on the map.");
         setSearching(false);
       }
     } catch {
