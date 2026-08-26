@@ -140,7 +140,7 @@ function buildDryHayDecision(
   const finalScore = hasCurrentWindow
     ? score
     : bestWindow.exists
-      ? Math.min(score, 49)
+      ? Math.max(score - 50, 0)
       : 0;
   const hasActionableCut = hasCurrentWindow || bestWindow.exists;
   const cutStart = hasCurrentWindow && currentCutEvaluation
@@ -390,7 +390,7 @@ function buildBaleageDecision(
   const finalScore = hasCurrentWindow
     ? adjustedScore
     : bestWindow.exists
-      ? Math.min(adjustedScore, 39)
+      ? Math.max(adjustedScore - 50, 0)
       : 0;
   const hasActionableCut = hasCurrentWindow || bestWindow.exists;
   const cutStart = hasCurrentWindow && currentCutEvaluation
