@@ -57,6 +57,7 @@ export type HayDecision = {
     dayLabel: string;
     confidence: Confidence;
     message: string;
+    reasons: string[];
   };
   tedding: {
     recommended: boolean;

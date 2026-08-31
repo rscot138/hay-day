@@ -722,6 +722,7 @@ function findBestCutWindow(
       endLabel: "",
       dayLabel: "",
       confidence: "low" as const,
+      reasons: [],
       message: "No validated cutting opportunities in the next 7 days. Next step: keep the field standing and check again after the next weather update."
     };
   }
@@ -735,6 +736,7 @@ function findBestCutWindow(
     endLabel: formatTime(addHours(best.start, 4)),
     dayLabel: formatDay(best.start, input.weather.timezone),
     confidence: best.confidence,
+    reasons: buildWindowReasons(best),
     message:
       best.confidence === "high"
         ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence based on strong drying conditions before rain.`
@@ -897,6 +899,18 @@ function labelRisk(hours: HourlyWeather[], baleTime: Date): Risk {
   const hoursBeforeBale = (baleTime.getTime() - rainTime.getTime()) / 36e5;
   if (hoursBeforeBale > 8) return "High";
   return "Moderate";
+}
+
+function buildWindowReasons(best: CandidateEvaluation) {
+  const reasons: string[] = [];
+  if (best.metrics.dryingHours >= 30) reasons.push("Strong drying hours in the window");
+  else if (best.metrics.dryingHours >= 16) reasons.push("Adequate drying hours to cure");
+  if (best.rain.amount < 0.02 && best.rain.maxProbability < 30) reasons.push("Low rain risk during curing");
+  if (best.metrics.averageHumidity < 75) reasons.push("Lower humidity speeds drying");
+  if (best.metrics.averageWind >= 6) reasons.push("Good wind for drying");
+  if (best.dryingMargin > 12) reasons.push("Buffer before next rain");
+  if (best.risk === "Low") reasons.push("Low overall risk");
+  return reasons.slice(0, 4);
 }
 
 function buildReasons(
@@ -1107,6 +1121,7 @@ function findBestBaleageCutWindow(
       endLabel: "",
       dayLabel: "",
       confidence: "low" as const,
+      reasons: [],
       message: "No validated baleage opportunities in the next 7 days. The short drying window should expand options once conditions improve."
     };
   }
@@ -1120,6 +1135,7 @@ function findBestBaleageCutWindow(
     endLabel: formatTime(addHours(best.start, 4)),
     dayLabel: formatDay(best.start, input.weather.timezone),
     confidence: best.confidence,
+    reasons: buildWindowReasons(best),
     message:
       best.confidence === "high"
         ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence — short drying works well with baleage.`

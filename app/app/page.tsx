@@ -546,6 +546,14 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
             <p className="relative mt-2 text-sm font-medium text-[#fdf6f4]/70">
               Conditions are not right for cutting right now.
             </p>
+            <div className="relative mt-4 grid gap-2 sm:grid-cols-2">
+              {decision.reasons.map((reason) => (
+                <div key={reason} className="flex gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-medium text-[#fdf6f4]">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{reason}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2b6b3f] via-[#245a35] to-[#163d25] p-5 shadow-lift sm:p-7">
@@ -573,14 +581,16 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#f6f7ee]/80">
                 {decision.bestWindow.message}
               </p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {decision.reasons.map((reason) => (
-                  <div key={reason} className="flex gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-medium text-[#f6f7ee]">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{reason}</span>
-                  </div>
-                ))}
-              </div>
+              {decision.bestWindow.reasons.length > 0 ? (
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {decision.bestWindow.reasons.map((reason) => (
+                    <div key={reason} className="flex gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-medium text-[#f6f7ee]">
+                      <Wheat className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{reason}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
