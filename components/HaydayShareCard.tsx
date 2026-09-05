@@ -43,8 +43,10 @@ const SHARE_TONES: Record<"good" | "caution" | "bad", ShareTone> = {
 };
 
 function shareToneFor(verdict: string): ShareTone {
-  if (verdict.includes("Caution")) return SHARE_TONES.caution;
-  if (verdict.includes("Cut")) return SHARE_TONES.good;
+  const v = verdict.trim().toLowerCase();
+  if (v.includes("do not cut") || v.startsWith("not")) return SHARE_TONES.bad;
+  if (v.includes("caution")) return SHARE_TONES.caution;
+  if (v.includes("cut")) return SHARE_TONES.good;
   return SHARE_TONES.bad;
 }
 
