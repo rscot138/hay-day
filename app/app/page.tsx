@@ -43,6 +43,7 @@ import { Select } from "@/components/ui/select";
 import { FieldSettings, HayDecision, DebugTrace, HourlyWeather, WeatherSummary } from "@/app/types/hay";
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
+import { getScorePhrase } from "@/app/lib/phrases";
 
 type ApiState =
   | { status: "idle" | "locating" | "loading"; error?: undefined }
@@ -501,6 +502,27 @@ function ScoreRing({ score, tone }: { score: number; tone: HeroTone }) {
   );
 }
 
+function ScorePhrase({ score, tone }: { score: number; tone: HeroTone }) {
+  const [phrase, setPhrase] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPhrase(getScorePhrase(score));
+  }, [score]);
+
+  if (!phrase) return null;
+  return (
+    <p
+      key={phrase}
+      className={cn(
+        "animate-phrase-fade max-w-[13rem] text-center text-sm font-semibold leading-snug",
+        tone.sub
+      )}
+    >
+      {phrase}
+    </p>
+  );
+}
+
 function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; decision: HayDecision; onFieldChange: (field: FieldSettings) => void }) {
   const isBaleage = decision.harvestMethod === "baleage";
   const tone = decision.score >= 70 ? heroTones.good : decision.score >= 50 ? heroTones.caution : heroTones.bad;
@@ -542,7 +564,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <ScoreRing score={decision.score} tone={heroTones.bad} />
+                <div className="flex flex-col items-center gap-2">
+                  <ScoreRing score={decision.score} tone={heroTones.bad} />
+                  <ScorePhrase score={decision.score} tone={heroTones.bad} />
+                </div>
                 <ShareButton label={decision.recommendation} score={decision.score} hint={decision.bestWindow.dayLabel} />
               </div>
             </div>
@@ -617,7 +642,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <ScoreRing score={decision.score} tone={tone} />
+              <div className="flex flex-col items-center gap-2">
+                <ScoreRing score={decision.score} tone={tone} />
+                <ScorePhrase score={decision.score} tone={tone} />
+              </div>
               <ShareButton label={decision.recommendation} score={decision.score} />
             </div>
           </div>
