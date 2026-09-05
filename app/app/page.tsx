@@ -504,7 +504,7 @@ function ScoreRing({ score, tone }: { score: number; tone: HeroTone }) {
 function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; decision: HayDecision; onFieldChange: (field: FieldSettings) => void }) {
   const isBaleage = decision.harvestMethod === "baleage";
   const tone = decision.score >= 70 ? heroTones.good : decision.score >= 50 ? heroTones.caution : heroTones.bad;
-  const hasCurrentWindow = decision.recommendation === "CUT NOW" || decision.recommendation === "PROCEED WITH CAUTION";
+  const hasCurrentWindow = decision.recommendation === "Cut Now" || decision.recommendation === "Proceed With Caution";
   const showUpcomingWindow = !hasCurrentWindow && decision.bestWindow.exists;
   const [saveName, setSaveName] = useState(field.name);
   const fieldNeedsName = !field.name;
@@ -538,12 +538,12 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                   {isBaleage ? "Baleage" : "Dry hay"}
                 </span>
                 <p className="mt-2 text-2xl font-black leading-none tracking-tight text-[#fdf6f4] sm:text-3xl">
-                  DO NOT CUT
+                  Do Not Cut
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <ScoreRing score={decision.score} tone={heroTones.bad} />
-                <ShareButton label={decision.recommendation} score={decision.score} />
+                <ShareButton label={decision.recommendation} score={decision.score} hint={decision.bestWindow.dayLabel} />
               </div>
             </div>
             <p className="relative mt-2 text-sm font-medium text-[#fdf6f4]/70">
@@ -1698,11 +1698,16 @@ function ProFeature({ label, description }: { label: string; description: string
   );
 }
 
-function ShareButton({ label, score }: { label: string; score: number }) {
+function ShareButton({ label, score, hint }: { label: string; score: number; hint?: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    const text = `Hay Day says: ${label} (Score: ${score}/100) — Check your field at`;
+    const windowHint =
+      hint === "Today" ? "this afternoon"
+      : hint === "Tomorrow" ? "tomorrow afternoon"
+      : hint ? `${hint} afternoon`
+      : "";
+    const text = `Hay Day says: ${label}${windowHint ? `, but ${windowHint} looks promising` : ""} (Score: ${score}/100) — Check your field at`;
     const url = "https://hayday.homesteadcommerce.com";
 
     if (navigator.share) {

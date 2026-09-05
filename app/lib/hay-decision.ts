@@ -79,9 +79,9 @@ export function calculateHayDecision(input: HayDecisionInput): HayDecision {
     harvestMethod: input.field.harvestMethod || "dry_hay",
     harvestComparison: {
       dryHay: {
-        summary: dryHay.recommendation.startsWith("CUT")
+        summary: dryHay.recommendation.startsWith("Cut")
           ? "Dry hay is viable now."
-          : dryHay.recommendation === "PROCEED WITH CAUTION"
+          : dryHay.recommendation === "Proceed With Caution"
             ? "Dry hay is possible with caution."
             : "No viable dry hay window this week.",
         cut: dryHay.timeline.cut,
@@ -89,9 +89,9 @@ export function calculateHayDecision(input: HayDecisionInput): HayDecision {
         risk: dryHay.comparison.withoutTedding.risk
       },
       baleage: {
-        summary: baleage.recommendation.startsWith("CUT")
+        summary: baleage.recommendation.startsWith("Cut")
           ? "Baleage is viable now."
-          : baleage.recommendation === "PROCEED WITH CAUTION"
+          : baleage.recommendation === "Proceed With Caution"
             ? "Baleage is possible with caution."
             : "No viable baleage window this week.",
         cut: baleage.timeline.cut,
@@ -132,11 +132,11 @@ function buildDryHayDecision(
   const hasCurrentWindow = currentCutEvaluation !== null;
   const status = hasCurrentWindow
     ? score >= 70
-      ? "CUT NOW"
+      ? "Cut Now"
       : score >= 50
-        ? "PROCEED WITH CAUTION"
-        : "DO NOT CUT"
-    : "DO NOT CUT";
+        ? "Proceed With Caution"
+        : "Do Not Cut"
+    : "Do Not Cut";
   const finalScore = hasCurrentWindow
     ? score
     : bestWindow.exists
@@ -383,14 +383,14 @@ function buildBaleageDecision(
   const bestWindow = findBestBaleageCutWindow(input, now, dryingHours, bestCandidateTrace);
   const hasCurrentWindow = currentCutEvaluation !== null && !tooWet;
   const status = tooWet
-    ? "DO NOT CUT"
+    ? "Do Not Cut"
     : hasCurrentWindow
       ? adjustedScore >= 60
-        ? "CUT NOW"
+        ? "Cut Now"
         : adjustedScore >= 40
-          ? "PROCEED WITH CAUTION"
-          : "DO NOT CUT"
-      : "DO NOT CUT";
+          ? "Proceed With Caution"
+          : "Do Not Cut"
+      : "Do Not Cut";
   const finalScore = hasCurrentWindow
     ? adjustedScore
     : bestWindow.exists
