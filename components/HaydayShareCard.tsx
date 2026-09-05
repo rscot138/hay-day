@@ -314,7 +314,7 @@ function HaydayShareCardCanvas({
         </p>
       </div>
 
-      <div className="relative mt-auto flex w-full items-end justify-between">
+      <div className="relative mt-auto flex w-full flex-col items-center gap-5">
         <div className="flex items-center gap-6">
           <div className={cn("flex items-center gap-4 rounded-2xl px-7 py-4", tone.chip)}>
             <Scissors className="h-[38px] w-[38px]" strokeWidth={2.25} />
@@ -331,7 +331,7 @@ function HaydayShareCardCanvas({
             </div>
           </div>
         </div>
-        <span className={cn("pb-1 text-[32px] font-medium", tone.sub)}>Based on real weather data</span>
+        <span className={cn("text-[32px] font-medium", tone.sub)}>Based on real weather data</span>
       </div>
     </div>
   );
