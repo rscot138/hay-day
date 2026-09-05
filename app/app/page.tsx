@@ -541,7 +541,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                   DO NOT CUT
                 </p>
               </div>
-              <ScoreRing score={decision.score} tone={heroTones.bad} />
+              <div className="flex items-center gap-3">
+                <ScoreRing score={decision.score} tone={heroTones.bad} />
+                <ShareButton label={decision.recommendation} score={decision.score} />
+              </div>
             </div>
             <p className="relative mt-2 text-sm font-medium text-[#fdf6f4]/70">
               Conditions are not right for cutting right now.
