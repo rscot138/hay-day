@@ -44,6 +44,7 @@ import { FieldSettings, HayDecision, DebugTrace, HourlyWeather, WeatherSummary }
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
 import { getScorePhrase } from "@/app/lib/phrases";
+import HaydayShareCard from "@/components/HaydayShareCard";
 
 type ApiState =
   | { status: "idle" | "locating" | "loading"; error?: undefined }
@@ -502,13 +503,7 @@ function ScoreRing({ score, tone }: { score: number; tone: HeroTone }) {
   );
 }
 
-function ScorePhrase({ score, tone }: { score: number; tone: HeroTone }) {
-  const [phrase, setPhrase] = useState<string | null>(null);
-
-  useEffect(() => {
-    setPhrase(getScorePhrase(score));
-  }, [score]);
-
+function ScorePhrase({ phrase, tone }: { phrase: string | null; tone: HeroTone }) {
   if (!phrase) return null;
   return (
     <p
@@ -533,6 +528,12 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
   const [proEmail, setProEmail] = useState("");
   const [proName, setProName] = useState("");
   const [proSubmitted, setProSubmitted] = useState(false);
+  const [phrase, setPhrase] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  useEffect(() => {
+    setPhrase(getScorePhrase(decision.score));
+  }, [decision.score]);
 
   const steps = isBaleage
     ? [
@@ -550,6 +551,22 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
 
   return (
     <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+      <HaydayShareCard
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        score={decision.score}
+        verdict={decision.recommendation}
+        phrase={phrase ?? getScorePhrase(decision.score)}
+        cutTime={decision.timeline.cut}
+        baleTime={decision.timeline.bale}
+        locationName={
+          field.name.trim() ||
+          (field.latitude != null && field.longitude != null
+            ? `${field.latitude.toFixed(3)}, ${field.longitude.toFixed(3)}`
+            : undefined)
+        }
+        date={new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+      />
       {showUpcomingWindow ? (
         <div className="flex flex-col gap-4">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#d25a41] via-[#c14831] to-[#942e1c] p-4 shadow-lift sm:p-5">
@@ -566,9 +583,9 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-center gap-2">
                   <ScoreRing score={decision.score} tone={heroTones.bad} />
-                  <ScorePhrase score={decision.score} tone={heroTones.bad} />
+                  <ScorePhrase phrase={phrase} tone={heroTones.bad} />
                 </div>
-                <ShareButton label={decision.recommendation} score={decision.score} hint={decision.bestWindow.dayLabel} />
+                <ShareButton onClick={() => setShareOpen(true)} />
               </div>
             </div>
             <p className="relative mt-2 text-sm font-medium text-[#fdf6f4]/70">
@@ -644,9 +661,9 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center gap-2">
                 <ScoreRing score={decision.score} tone={tone} />
-                <ScorePhrase score={decision.score} tone={tone} />
+                <ScorePhrase phrase={phrase} tone={tone} />
               </div>
-              <ShareButton label={decision.recommendation} score={decision.score} />
+              <ShareButton onClick={() => setShareOpen(true)} />
             </div>
           </div>
           <div className="relative mt-6 grid gap-2 sm:grid-cols-2">
@@ -1726,39 +1743,15 @@ function ProFeature({ label, description }: { label: string; description: string
   );
 }
 
-function ShareButton({ label, score, hint }: { label: string; score: number; hint?: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleShare = async () => {
-    const windowHint =
-      hint === "Today" ? "this afternoon"
-      : hint === "Tomorrow" ? "tomorrow afternoon"
-      : hint ? `${hint} afternoon`
-      : "";
-    const text = `Hay Day says: ${label}${windowHint ? `, but ${windowHint} looks promising` : ""} (Score: ${score}/100) — Check your field at`;
-    const url = "https://hayday.homesteadcommerce.com";
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "Hay Day", text, url });
-      } catch {
-        // user cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(`${text} ${url}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
+function ShareButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
-      onClick={handleShare}
+      onClick={onClick}
       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white/70 transition-colors hover:bg-white/25 hover:text-white"
       title="Share this result"
     >
-      {copied ? <CheckCircle2 className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+      <Share2 className="h-4 w-4" />
     </button>
   );
 }
