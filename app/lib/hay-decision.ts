@@ -149,7 +149,7 @@ function buildDryHayDecision(
       ? new Date(bestWindow.start)
       : null;
   const benefitHours = TEDDING_BENEFIT[input.field.swathDensity];
-  const tedStart = cutStart ? snapOperationTime(addHours(cutStart, 22)) : null;
+  const tedStart = cutStart ? findNextDryOperationHour(addHours(cutStart, 22), input.weather.hourly) : null;
   const tedEnd = tedStart ? addHours(tedStart, 3) : null;
   const baleWithoutTed = cutStart ? snapOperationTime(addHours(cutStart, dryingHours)) : null;
   const baleWithTed = cutStart ? snapOperationTime(addHours(cutStart, Math.max(36, dryingHours - benefitHours))) : null;
@@ -958,11 +958,21 @@ function computeRakeTime(cutStart: Date, baleTime: Date | null, dryingHours: num
   // Rake must be at least 24h after tedding
   if (tedTime && rake < addHours(tedTime, 24)) {
     const dayAfterTed = snapOperationTime(addHours(tedTime, 24), hourly);
-    if (dayAfterTed < baleTime) return dayAfterTed;
-    return snapOperationTime(addHours(baleTime, -2), hourly);
+    if (dayAfterTed < baleTime) return findNextDryOperationHourBefore(dayAfterTed, baleTime, hourly);
+    return findNextDryOperationHourBefore(addHours(baleTime, -2), baleTime, hourly);
   }
 
-  return rake;
+  return findNextDryOperationHourBefore(rake, baleTime, hourly);
+}
+
+function findNextDryOperationHourBefore(date: Date, before: Date, hourly: HourlyWeather[] | undefined): Date {
+  let candidate = snapOperationTime(date, hourly);
+  for (let i = 0; i < 48; i += 1) {
+    if (candidate >= before) return date;
+    if (!hasRainAt(hourly, candidate)) return candidate;
+    candidate = snapOperationTime(addHours(candidate, 1), hourly);
+  }
+  return date;
 }
 
 function evaluateBaleageCandidateWindow(
@@ -1215,6 +1225,21 @@ function snapOperationTime(date: Date, hourly?: HourlyWeather[]): Date {
     }
   }
   return snapped;
+}
+
+function hasRainAt(hourly: HourlyWeather[] | undefined, date: Date): boolean {
+  if (!hourly) return false;
+  const match = hourly.find((hw) => new Date(hw.time).getTime() === date.getTime());
+  return match ? match.precipitationAmount > 0.01 || match.precipitationProbability >= 55 : false;
+}
+
+function findNextDryOperationHour(date: Date, hourly: HourlyWeather[] | undefined, maxDays = 2): Date {
+  let candidate = snapOperationTime(date, hourly);
+  for (let i = 0; i < maxDays * 12; i += 1) {
+    if (!hasRainAt(hourly, candidate)) return candidate;
+    candidate = snapOperationTime(addHours(candidate, 1), hourly);
+  }
+  return snapOperationTime(date, hourly);
 }
 
 function addHours(date: Date, hours: number) {
