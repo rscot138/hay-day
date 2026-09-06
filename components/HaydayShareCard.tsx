@@ -321,7 +321,7 @@ function HaydayShareCardCanvas({
 
       <div className="relative mt-auto flex w-full flex-col items-center gap-5">
         {hasWindow ? (
-          <span className={cn("text-[34px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
+          <span className={cn("text-[32px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
             Recommended Timeline:
           </span>
         ) : null}
