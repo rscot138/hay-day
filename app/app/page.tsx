@@ -67,14 +67,13 @@ const defaultField: FieldSettings = {
   lastCutTiming: "unknown"
 };
 
-const tabs = ["Home", "Breakdown", "Timeline", "Tedding", "Field"] as const;
+const tabs = ["Home", "Breakdown", "Timeline", "Field"] as const;
 type Tab = (typeof tabs)[number];
 
 const tabMeta: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "Home", label: "Decision", icon: <Gauge className="h-4 w-4" /> },
   { id: "Breakdown", label: "Breakdown", icon: <ListChecks className="h-4 w-4" /> },
   { id: "Timeline", label: "Forecast", icon: <CalendarDays className="h-4 w-4" /> },
-  { id: "Tedding", label: "Tedding & Rake", icon: <Tractor className="h-4 w-4" /> },
   { id: "Field", label: "Field Setup", icon: <MapPinned className="h-4 w-4" /> }
 ];
 
@@ -396,7 +395,6 @@ export default function Home() {
             {activeTab === "Timeline" && decision && result ? (
               <TimelineScreen decision={decision} weather={result.weather} />
             ) : null}
-            {activeTab === "Tedding" && decision ? <TeddingScreen decision={decision} /> : null}
             {activeTab === "Field" ? (
               <FieldSetup
                 field={field}
@@ -503,15 +501,12 @@ function ScoreRing({ score, tone }: { score: number; tone: HeroTone }) {
   );
 }
 
-function ScorePhrase({ phrase, tone }: { phrase: string | null; tone: HeroTone }) {
+function ScorePhrase({ phrase, tone, className }: { phrase: string | null; tone: HeroTone; className?: string }) {
   if (!phrase) return null;
   return (
     <p
       key={phrase}
-      className={cn(
-        "animate-phrase-fade max-w-[13rem] text-center text-sm font-semibold leading-snug",
-        tone.sub
-      )}
+      className={cn("animate-phrase-fade text-sm font-semibold leading-snug", tone.sub, className)}
     >
       {phrase}
     </p>
@@ -583,14 +578,11 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-center gap-2">
                   <ScoreRing score={decision.score} tone={heroTones.bad} />
-                  <ScorePhrase phrase={phrase} tone={heroTones.bad} />
                 </div>
                 <ShareButton onClick={() => setShareOpen(true)} />
               </div>
             </div>
-            <p className="relative mt-2 text-sm font-medium text-[#fdf6f4]/70">
-              Conditions are not right for cutting right now.
-            </p>
+            <ScorePhrase phrase={phrase} tone={heroTones.bad} className="relative mt-2" />
             <div className="relative mt-4 grid gap-2 sm:grid-cols-2">
               {decision.reasons.map((reason) => (
                 <div key={reason} className="flex gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-medium text-[#fdf6f4]">
