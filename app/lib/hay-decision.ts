@@ -148,11 +148,11 @@ function buildDryHayDecision(
     : bestWindow.exists
       ? new Date(bestWindow.start)
       : null;
-  const benefitHours = TEDDING_BENEFIT[input.field.swathDensity];
+  const teddingModelBenefit = TEDDING_BENEFIT[input.field.swathDensity];
   const tedStart = cutStart ? findNextDryOperationHour(addHours(cutStart, 22), input.weather.hourly) : null;
   const tedEnd = tedStart ? addHours(tedStart, 3) : null;
   const baleWithoutTed = cutStart ? snapOperationTime(addHours(cutStart, dryingHours)) : null;
-  const baleWithTed = cutStart ? snapOperationTime(addHours(cutStart, Math.max(36, dryingHours - benefitHours))) : null;
+  const baleWithTed = cutStart ? snapOperationTime(addHours(cutStart, Math.max(36, dryingHours - teddingModelBenefit))) : null;
   const teddingTimesEqual = baleWithTed && baleWithoutTed && Math.abs(baleWithTed.getTime() - baleWithoutTed.getTime()) < 36e5;
   const teddingRecommended = dryingHours > 48 && rain.maxProbability > 30 && score >= 40 && score <= 70 && !teddingTimesEqual;
   const riskWithoutTed = cutStart && baleWithoutTed ? labelRisk(forecastBetween(forecast, cutStart, baleWithoutTed), baleWithoutTed) : "High";
@@ -168,6 +168,10 @@ function buildDryHayDecision(
     rakeTime && baleWithoutTed && Math.abs(baleWithoutTed.getTime() - rakeTime.getTime()) < 36e5
       ? snapOperationTime(addHours(baleWithoutTed, 1))
       : baleWithoutTed;
+  const benefitHours =
+    baleWithTed && withoutTedBaleTime
+      ? Math.max(0, Math.round((withoutTedBaleTime.getTime() - baleWithTed.getTime()) / 36e5))
+      : 0;
 
   return {
     score: finalScore,
@@ -180,13 +184,15 @@ function buildDryHayDecision(
       window: tedStart && tedEnd ? `${formatDateTime(tedStart)} - ${formatTime(tedEnd)}` : "No tedding window until a valid cut window appears",
       benefitHours,
       message: !hasActionableCut
-        ? "Tedding can wait. Next step: watch for a validated cut window before planning any ted pass."
+        ? "No valid cut or baling window yet. Wait for a valid window before planning any ted pass."
+        : benefitHours === 0
+        ? "Tedding would not change the bale time. Tedding causes leaf loss, so skip it when there is no working-time gain."
         : teddingTimesEqual
-        ? `Tedding would not change the bale time. Both scenarios land at ${baleWithoutTed ? formatDateTime(baleWithoutTed) : "—"}. Tedding causes leaf loss, so skip it when there is no working-time gain.`
+        ? `Tedding would not change the bale time. Both scenarios land at ${baleWithoutTed ? formatDateTime(baleWithoutTed) : "unknown"}. Tedding causes leaf loss, so skip it when there is no working-time gain.`
         : teddingRecommended && tedStart && tedEnd
-        ? `Tedding recommended ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect to save ~${benefitHours} hours drying time.`
+        ? `Tedding recommended ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect baling to land ~${benefitHours} hour${benefitHours === 1 ? "" : "s"} earlier.`
         : tedStart && tedEnd
-          ? `Tedding is optional. Best window to double-check is ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are ~${benefitHours} hours if the windrow needs help.`
+          ? `Tedding is optional. Best window to double-check is ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are ~${benefitHours} hour${benefitHours === 1 ? "" : "s"} if the windrow needs help.`
           : "Tedding is optional, but there is no valid cut window to attach it to yet."
     },
     timeline: {
@@ -926,7 +932,7 @@ function buildReasons(
   const reasons: string[] = [];
   if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push("Cannot start cutting now — wait for the next opportunity window below");
+      reasons.push("Cannot start cutting now; wait for the next opportunity window below");
     } else {
       reasons.push("No viable cut windows in the next 7 days due to weather or field conditions");
     }
@@ -1148,10 +1154,10 @@ function findBestBaleageCutWindow(
     reasons: buildWindowReasons(best),
     message:
       best.confidence === "high"
-        ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence — short drying works well with baleage.`
+        ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. High confidence, since short drying works well with baleage.`
         : best.confidence === "medium"
           ? `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Conditions are workable for baleage with moderate caution.`
-          : `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Marginal window, but baleage may still work — validate first.`
+          : `${prefix}: ${formatDay(best.start, input.weather.timezone)} ${formatTime(best.start)} - ${formatTime(addHours(best.start, 4))}. Marginal window, but baleage may still work, so validate first.`
   };
 }
 
@@ -1170,25 +1176,25 @@ function buildBaleageReasons(
 ) {
   const reasons: string[] = [];
   if (tooWet) {
-    reasons.push("Crop is too wet for baleage — need more drying time");
+    reasons.push("Crop is too wet for baleage; it needs more drying time");
     return reasons;
   }
   if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push("Cannot start baleage now — wait for the next opportunity window below");
+      reasons.push("Cannot start baleage now; wait for the next opportunity window below");
     } else {
       reasons.push("No viable baleage windows in the next 7 days");
     }
   }
-  if (overdryPenalty > 0) reasons.push("Drying estimate exceeds 48h — crop may over-dry for ideal baleage");
+  if (overdryPenalty > 0) reasons.push("Drying estimate exceeds 48h; crop may over-dry for ideal baleage");
   if (drying.dryingHours >= 8) reasons.push("Adequate drying conditions for baleage wilting");
   else reasons.push("Drying hours are limited for reliable wilting");
   if (rain.nextRainAt) {
     const rainTime = new Date(rain.nextRainAt);
     if (timelineBaleTime && rainTime > timelineBaleTime) {
-      reasons.push(`Rain possible around ${formatDateTime(rainTime)} — rain after baling is OK if wrapped`);
+      reasons.push(`Rain possible around ${formatDateTime(rainTime)}; rain after baling is OK if wrapped`);
     } else {
-      reasons.push(`Rain possible around ${formatDateTime(rainTime)} — minor rain during wilting is manageable`);
+      reasons.push(`Rain possible around ${formatDateTime(rainTime)}; minor rain during wilting is manageable`);
     }
   } else reasons.push("No meaningful rain showing during wilting");
   if (residualPenalty > 6) reasons.push("Moisture from recent rainfall is still present");

@@ -20,7 +20,7 @@ export const GOOD_SCORE_PHRASES = [
 ];
 
 export const MID_SCORE_PHRASES = [
-  "Tight window—plan it right",
+  "Tight window, so plan it right",
   "It’ll work, but keep an eye on it",
   "You’re threading the needle here",
   "Could go either way",
@@ -42,7 +42,7 @@ export const LOW_SCORE_PHRASES = [
 export const BAD_SCORE_PHRASES = [
   "Nothing to gain right now",
   "You’d be fighting the weather",
-  "Fields need time—sit tight",
+  "Fields need time, so sit tight",
   "This one’s not ready yet",
   "Better days are coming",
   "Let this pass",

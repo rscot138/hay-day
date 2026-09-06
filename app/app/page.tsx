@@ -554,13 +554,9 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         phrase={phrase ?? getScorePhrase(decision.score)}
         cutTime={decision.timeline.cut}
         baleTime={decision.timeline.bale}
-        locationName={
-          field.name.trim() ||
-          (field.latitude != null && field.longitude != null
-            ? `${field.latitude.toFixed(3)}, ${field.longitude.toFixed(3)}`
-            : undefined)
-        }
+        locationName={field.name.trim() || undefined}
         date={new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+        hasWindow={hasCurrentWindow || decision.bestWindow.exists}
       />
       {showUpcomingWindow ? (
         <div className="flex flex-col gap-4">
@@ -701,7 +697,7 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Tractor className="h-4 w-4" />
               </div>
-              Action Timeline
+              Recommended Timeline
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -750,7 +746,9 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                 </span>
               ) : decision.tedding.benefitHours > 0 ? (
                 <span className="ml-1 inline-flex rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                  Saves ~{decision.tedding.benefitHours}h
+                  {decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime
+                    ? "No change"
+                    : `Saves ~${decision.tedding.benefitHours}h`}
                 </span>
               ) : (
                 <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -783,10 +781,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
               <ProFeature label="Confidence score" description="Deeper scoring breakdown with per-factor confidence ratings." />
               <ProFeature label="Exact timing" description="Minute-level cut, rake, and bale timing instead of hourly windows." />
               <ProFeature label="Multiple fields" description="Save and switch between fields without re-entering setup each time." />
-              <ProFeature label="Alerts" description="Get notified when conditions are right — or about to turn." />
+              <ProFeature label="Alerts" description="Get notified when conditions are right, or about to turn." />
             </div>
             {proSubmitted ? (
-              <p className="mt-4 text-sm font-semibold text-primary">Thanks — we&apos;ll be in touch.</p>
+              <p className="mt-4 text-sm font-semibold text-primary">Thanks, we&apos;ll be in touch.</p>
             ) : (
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
                 <div className="min-w-0 flex-1 grid gap-2 sm:grid-cols-2">
@@ -1168,7 +1166,7 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
           </CardHeader>
           <CardContent className="grid gap-3">
             <ActionRow icon={<Clock className="h-4 w-4" />} label="Tedding window" value={decision.tedding.window} />
-            <ActionRow icon={<Timer className="h-4 w-4" />} label="Saved time" value={`~${decision.tedding.benefitHours} hours`} />
+            <ActionRow icon={<Timer className="h-4 w-4" />} label="Saved time" value={`~${decision.tedding.benefitHours} hour${decision.tedding.benefitHours === 1 ? "" : "s"}`} />
             <ActionRow icon={<Wind className="h-4 w-4" />} label="Rake" value={decision.timeline.rake} />
             <ActionRow icon={<Waves className="h-4 w-4" />} label="With tedding" value={decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime ? "No change" : decision.comparison.withTedding.baleTime} />
             <ActionRow icon={<CloudRain className="h-4 w-4" />} label="Without" value={decision.comparison.withoutTedding.baleTime} muted />
@@ -1189,7 +1187,7 @@ function DebugScreen({ decision }: { decision: HayDecision }) {
         <CardContent className="flex items-center gap-3 p-4">
           <Wheat className="h-5 w-5 shrink-0 text-amber-600" />
           <p className="text-sm font-semibold text-amber-900">
-            Debug mode — visible to all users until this goes live.
+            Debug mode, visible to all users until this goes live.
           </p>
         </CardContent>
       </Card>

@@ -58,6 +58,7 @@ interface HaydayShareCardProps {
   baleTime: string;
   locationName?: string;
   date: string;
+  hasWindow?: boolean;
   open?: boolean;
   onClose?: () => void;
 }
@@ -70,6 +71,7 @@ export default function HaydayShareCard({
   baleTime,
   locationName,
   date,
+  hasWindow = false,
   open = false,
   onClose
 }: HaydayShareCardProps) {
@@ -129,7 +131,7 @@ export default function HaydayShareCard({
       setTimeout(() => setCopied(false), 2000);
       track("share_card_copy", { verdict, score });
     } catch {
-      // clipboard images unsupported — fall back to downloading
+      // clipboard images unsupported; fall back to downloading
       await handleDownload();
     } finally {
       setBusy(null);
@@ -164,7 +166,7 @@ export default function HaydayShareCard({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="flex w-full max-w-[440px] flex-col items-center gap-4 sm:max-w-[480px]">
         <div className="flex w-full items-center justify-between">
-          <span className="text-sm font-bold tracking-widest text-white/90">Hay Day — Share card</span>
+          <span className="text-sm font-bold tracking-widest text-white/90">Hay Day, Share card</span>
           <button
             type="button"
             onClick={onClose}
@@ -186,6 +188,7 @@ export default function HaydayShareCard({
                 baleTime={baleTime}
                 locationName={locationName}
                 date={date}
+                hasWindow={hasWindow}
                 tone={shareToneFor(verdict)}
               />
             </div>
@@ -242,6 +245,7 @@ function HaydayShareCardCanvas({
   baleTime,
   locationName,
   date,
+  hasWindow,
   tone
 }: {
   score: number;
@@ -251,6 +255,7 @@ function HaydayShareCardCanvas({
   baleTime: string;
   locationName?: string;
   date: string;
+  hasWindow: boolean;
   tone: ShareTone;
 }) {
   const radius = 80;
@@ -315,6 +320,11 @@ function HaydayShareCardCanvas({
       </div>
 
       <div className="relative mt-auto flex w-full flex-col items-center gap-5">
+        {hasWindow ? (
+          <span className={cn("text-[34px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
+            Recommended Timeline:
+          </span>
+        ) : null}
         <div className="flex items-center gap-6">
           <div className={cn("flex items-center gap-4 rounded-2xl px-7 py-4", tone.chip)}>
             <Scissors className="h-[38px] w-[38px]" strokeWidth={2.25} />
