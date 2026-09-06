@@ -62,7 +62,7 @@ export type HayDecision = {
   tedding: {
     recommended: boolean;
     window: string;
-    benefitHours: number;
+    savedDays: number;
     message: string;
   };
   timeline: {

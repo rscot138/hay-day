@@ -44,6 +44,7 @@ import { FieldSettings, HayDecision, DebugTrace, HourlyWeather, WeatherSummary }
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
 import { getScorePhrase } from "@/app/lib/phrases";
+import { formatSavedDays } from "@/app/lib/hay-decision";
 import HaydayShareCard from "@/components/HaydayShareCard";
 
 type ApiState =
@@ -744,11 +745,11 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                 <span className="ml-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
                   Recommended
                 </span>
-              ) : decision.tedding.benefitHours > 0 ? (
+              ) : decision.tedding.savedDays > 0 ? (
                 <span className="ml-1 inline-flex rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-700">
                   {decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime
                     ? "No change"
-                    : `Saves ~${decision.tedding.benefitHours}h`}
+                    : `Saves ~${formatSavedDays(decision.tedding.savedDays)}`}
                 </span>
               ) : (
                 <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -1115,9 +1116,9 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
               </div>
               Tedding &amp; Raking
             </CardTitle>
-            {!decision.tedding.recommended && decision.tedding.benefitHours > 0 ? (
+            {!decision.tedding.recommended && decision.tedding.savedDays > 0 ? (
               <span className="ml-1 inline-flex rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                Saves ~{decision.tedding.benefitHours}h
+                Saves ~{formatSavedDays(decision.tedding.savedDays)}
               </span>
             ) : !decision.tedding.recommended ? (
               <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -1166,7 +1167,7 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
           </CardHeader>
           <CardContent className="grid gap-3">
             <ActionRow icon={<Clock className="h-4 w-4" />} label="Tedding window" value={decision.tedding.window} />
-            <ActionRow icon={<Timer className="h-4 w-4" />} label="Saved time" value={`~${decision.tedding.benefitHours} hour${decision.tedding.benefitHours === 1 ? "" : "s"}`} />
+            <ActionRow icon={<Timer className="h-4 w-4" />} label="Saved time" value={decision.tedding.savedDays > 0 ? `~${formatSavedDays(decision.tedding.savedDays)}` : "No change"} />
             <ActionRow icon={<Wind className="h-4 w-4" />} label="Rake" value={decision.timeline.rake} />
             <ActionRow icon={<Waves className="h-4 w-4" />} label="With tedding" value={decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime ? "No change" : decision.comparison.withTedding.baleTime} />
             <ActionRow icon={<CloudRain className="h-4 w-4" />} label="Without" value={decision.comparison.withoutTedding.baleTime} muted />

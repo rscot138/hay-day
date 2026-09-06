@@ -172,6 +172,7 @@ function buildDryHayDecision(
     baleWithTed && withoutTedBaleTime
       ? Math.max(0, Math.round((withoutTedBaleTime.getTime() - baleWithTed.getTime()) / 36e5))
       : 0;
+  const savedDays = benefitHours > 0 ? Math.round((benefitHours / 24) * 2) / 2 : 0;
 
   return {
     score: finalScore,
@@ -182,17 +183,17 @@ function buildDryHayDecision(
     tedding: {
       recommended: hasActionableCut && teddingRecommended,
       window: tedStart && tedEnd ? `${formatDateTime(tedStart)} - ${formatTime(tedEnd)}` : "No tedding window until a valid cut window appears",
-      benefitHours,
+      savedDays,
       message: !hasActionableCut
         ? "No valid cut or baling window yet. Wait for a valid window before planning any ted pass."
-        : benefitHours === 0
+        : savedDays === 0
         ? "Tedding would not change the bale time. Tedding causes leaf loss, so skip it when there is no working-time gain."
         : teddingTimesEqual
         ? `Tedding would not change the bale time. Both scenarios land at ${baleWithoutTed ? formatDateTime(baleWithoutTed) : "unknown"}. Tedding causes leaf loss, so skip it when there is no working-time gain.`
         : teddingRecommended && tedStart && tedEnd
-        ? `Tedding recommended ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect baling to land ~${benefitHours} hour${benefitHours === 1 ? "" : "s"} earlier.`
+        ? `Tedding recommended ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}. If crop is tedded, expect baling to land about ${formatSavedDays(savedDays)} earlier.`
         : tedStart && tedEnd
-          ? `Tedding is optional. Best window to double-check is ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are ~${benefitHours} hour${benefitHours === 1 ? "" : "s"} if the windrow needs help.`
+          ? `Tedding is optional. Best window to double-check is ${formatDay(tedStart, input.weather.timezone)} between ${formatTime(tedStart)} - ${formatTime(tedEnd)}; expected savings are about ${formatSavedDays(savedDays)} if the windrow needs help.`
           : "Tedding is optional, but there is no valid cut window to attach it to yet."
     },
     timeline: {
@@ -426,7 +427,7 @@ function buildBaleageDecision(
     tedding: {
       recommended: false,
       window: "Not applicable for baleage",
-      benefitHours: 0,
+      savedDays: 0,
       message: "Tedding is not used with baleage. The shorter drying window makes tedding unnecessary."
     },
     timeline: {
@@ -1289,4 +1290,13 @@ function formatTime(date: Date) {
     hour: "numeric",
     minute: "2-digit"
   }).format(date);
+}
+
+export function formatSavedDays(days: number): string {
+  if (days <= 0) return "";
+  const whole = Math.floor(days);
+  const frac = days - whole;
+  if (frac === 0) return whole === 1 ? "1 day" : `${whole} days`;
+  const fracLabel = frac === 0.5 ? "½" : "";
+  return whole === 0 ? "½ day" : `${whole}${fracLabel} days`;
 }
