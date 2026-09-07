@@ -38,6 +38,9 @@ const CONDITIONING_FACTOR: Record<Conditioning, number> = {
   impeller: 0.9
 };
 
+export const WAIT_FOR_WINDOW_REASON = "Cannot start cutting now; wait for the next opportunity window below";
+export const BALEAGE_WAIT_FOR_WINDOW_REASON = "Cannot start baleage now; wait for the next opportunity window below";
+
 type CandidateEvaluation = {
   start: Date;
   end: Date;
@@ -933,7 +936,7 @@ function buildReasons(
   const reasons: string[] = [];
   if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push("Cannot start cutting now; wait for the next opportunity window below");
+      reasons.push(WAIT_FOR_WINDOW_REASON);
     } else {
       reasons.push("No viable cut windows in the next 7 days due to weather or field conditions");
     }
@@ -1182,7 +1185,7 @@ function buildBaleageReasons(
   }
   if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push("Cannot start baleage now; wait for the next opportunity window below");
+      reasons.push(BALEAGE_WAIT_FOR_WINDOW_REASON);
     } else {
       reasons.push("No viable baleage windows in the next 7 days");
     }

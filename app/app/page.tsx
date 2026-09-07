@@ -44,7 +44,7 @@ import { FieldSettings, HayDecision, DebugTrace, HourlyWeather, WeatherSummary }
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
 import { getScorePhrase } from "@/app/lib/phrases";
-import { formatSavedDays } from "@/app/lib/hay-decision";
+import { formatSavedDays, WAIT_FOR_WINDOW_REASON, BALEAGE_WAIT_FOR_WINDOW_REASON } from "@/app/lib/hay-decision";
 import HaydayShareCard from "@/components/HaydayShareCard";
 
 type ApiState =
@@ -558,7 +558,7 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         locationName={field.name?.trim() || undefined}
         date={new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
         hasWindow={hasCurrentWindow || decision.bestWindow.exists}
-        reason={decision.reasons[0] ?? ""}
+        reason={decision.reasons.find((r) => r !== WAIT_FOR_WINDOW_REASON && r !== BALEAGE_WAIT_FOR_WINDOW_REASON) ?? ""}
       />
       {showUpcomingWindow ? (
         <div className="flex flex-col gap-4">
