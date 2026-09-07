@@ -296,24 +296,26 @@ function HaydayShareCardCanvas({
         </span>
         <h2 className="mt-6 text-center text-[128px] font-black leading-none tracking-tight">{verdict}</h2>
 
-        <div className="relative mt-10">
-          <svg width="240" height="240" viewBox="0 0 240 240" className="-rotate-90">
-            <circle cx="120" cy="120" r={radius} fill="none" strokeWidth="14" className={tone.track} />
-            <circle
-              cx="120"
-              cy="120"
-              r={radius}
-              fill="none"
-              strokeWidth="14"
-              strokeLinecap="round"
-              strokeDasharray={`${filled} ${circumference}`}
-              className={tone.ring}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-[96px] font-black leading-none tracking-tight">{score}</span>
-            <span className={cn("mt-2 text-[28px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
+        <div className={cn("relative mt-10 flex flex-col items-center")}>
+          <div className="relative">
+            <svg width="240" height="240" viewBox="0 0 240 240" className="-rotate-90">
+              <circle cx="120" cy="120" r={radius} fill="none" strokeWidth="14" className={tone.track} />
+              <circle
+                cx="120"
+                cy="120"
+                r={radius}
+                fill="none"
+                strokeWidth="14"
+                strokeLinecap="round"
+                strokeDasharray={`${filled} ${circumference}`}
+                className={tone.ring}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[96px] font-black leading-none tracking-tight">{score}</span>
+            </div>
           </div>
+          <span className={cn("mt-3 text-[28px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
         </div>
 
         <p className={cn("mt-[56px] max-w-[840px] text-center text-[52px] font-semibold italic leading-snug", tone.sub)}>
