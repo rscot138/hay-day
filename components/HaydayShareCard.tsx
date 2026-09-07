@@ -301,6 +301,12 @@ function HaydayShareCardCanvas({
         </span>
         <h2 className="mt-5 text-center text-[104px] font-black leading-none tracking-tight">{verdict}</h2>
 
+        {reason ? (
+          <p className={cn("mt-6 max-w-[820px] text-center text-[26px] font-semibold leading-snug", tone.sub)}>
+            {reason}
+          </p>
+        ) : null}
+
         <div className="relative mt-8 flex flex-col items-center">
           <div className="relative">
             <svg width="220" height="220" viewBox="0 0 220 220" className="-rotate-90">
@@ -322,12 +328,6 @@ function HaydayShareCardCanvas({
           </div>
           <span className={cn("mt-3 text-[26px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
         </div>
-
-        {reason ? (
-          <p className={cn("mt-8 max-w-[820px] text-center text-[30px] font-semibold leading-snug", tone.sub)}>
-            {reason}
-          </p>
-        ) : null}
 
         <p className={cn("mt-6 max-w-[840px] text-center text-[44px] font-semibold italic leading-snug", tone.sub)}>
           {phrase}
