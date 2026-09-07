@@ -166,7 +166,7 @@ export default function HaydayShareCard({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="flex w-full max-w-[440px] flex-col items-center gap-4 sm:max-w-[480px]">
         <div className="flex w-full items-center justify-between">
-          <span className="text-sm font-bold tracking-widest text-white/90">Hay Day, Share card</span>
+          <span className="text-sm font-bold tracking-widest text-white/90">Hay Day</span>
           <button
             type="button"
             onClick={onClose}
@@ -258,7 +258,7 @@ function HaydayShareCardCanvas({
   hasWindow: boolean;
   tone: ShareTone;
 }) {
-  const radius = 80;
+  const radius = 88;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(100, score));
   const filled = circumference * (clamped / 100);
@@ -285,7 +285,7 @@ function HaydayShareCardCanvas({
       </div>
 
       {locationName ? (
-        <span className={cn("relative mt-4 max-w-full truncate text-[34px] font-medium", tone.sub)}>
+        <span className={cn("relative mt-4 mb-10 max-w-full truncate text-[34px] font-medium", tone.sub)}>
           {locationName}
         </span>
       ) : null}
@@ -296,22 +296,24 @@ function HaydayShareCardCanvas({
         </span>
         <h2 className="mt-6 text-center text-[128px] font-black leading-none tracking-tight">{verdict}</h2>
 
-        <svg width="220" height="220" viewBox="0 0 220 220" className="mt-10 -rotate-90">
-          <circle cx="110" cy="110" r={radius} fill="none" strokeWidth="14" className={tone.track} />
-          <circle
-            cx="110"
-            cy="110"
-            r={radius}
-            fill="none"
-            strokeWidth="14"
-            strokeLinecap="round"
-            strokeDasharray={`${filled} ${circumference}`}
-            className={tone.ring}
-          />
-        </svg>
-        <div className="-mt-[148px] flex flex-col items-center">
-          <span className="text-[104px] font-black leading-none tracking-tight">{score}</span>
-          <span className={cn("mt-2 text-[28px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
+        <div className="relative mt-10">
+          <svg width="240" height="240" viewBox="0 0 240 240" className="-rotate-90">
+            <circle cx="120" cy="120" r={radius} fill="none" strokeWidth="14" className={tone.track} />
+            <circle
+              cx="120"
+              cy="120"
+              r={radius}
+              fill="none"
+              strokeWidth="14"
+              strokeLinecap="round"
+              strokeDasharray={`${filled} ${circumference}`}
+              className={tone.ring}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-[96px] font-black leading-none tracking-tight">{score}</span>
+            <span className={cn("mt-2 text-[28px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
+          </div>
         </div>
 
         <p className={cn("mt-[56px] max-w-[840px] text-center text-[52px] font-semibold italic leading-snug", tone.sub)}>
