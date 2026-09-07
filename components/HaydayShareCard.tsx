@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toBlob, toPng } from "html-to-image";
-import { Check, Copy, Download, Scissors, Share2, Waves, Wheat, X } from "lucide-react";
+import { Check, Copy, Download, MapPin, Scissors, Share2, Waves, Wheat, X } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
 
@@ -290,8 +290,9 @@ function HaydayShareCardCanvas({
       </div>
 
       {locationName ? (
-        <span className={cn("relative mt-4 mb-8 max-w-full truncate text-[34px] font-medium", tone.sub)}>
-          {locationName}
+        <span className={cn("relative mt-4 mb-8 flex max-w-full items-center gap-2.5", tone.sub)}>
+          <MapPin className="h-[30px] w-[30px] shrink-0" strokeWidth={2} />
+          <span className="max-w-full truncate text-[34px] font-medium leading-tight">{locationName}</span>
         </span>
       ) : null}
 
