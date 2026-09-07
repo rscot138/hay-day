@@ -555,10 +555,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         phrase={phrase ?? getScorePhrase(decision.score)}
         cutTime={decision.timeline.cut}
         baleTime={decision.timeline.bale}
-        locationName={field.name.trim() || undefined}
+        locationName={field.name?.trim() || undefined}
         date={new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
         hasWindow={hasCurrentWindow || decision.bestWindow.exists}
-        reason={decision.bestWindow.exists ? decision.bestWindow.message : decision.reasons[0] ?? ""}
+        reason={decision.reasons[0] ?? ""}
       />
       {showUpcomingWindow ? (
         <div className="flex flex-col gap-4">
