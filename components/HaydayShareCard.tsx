@@ -325,7 +325,7 @@ function HaydayShareCardCanvas({
 
       <div className="relative mt-auto flex w-full flex-col items-center gap-5">
         {hasWindow ? (
-          <span className={cn("text-[32px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
+          <span className={cn("text-[28px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
             Recommended Timeline:
           </span>
         ) : null}
@@ -345,7 +345,7 @@ function HaydayShareCardCanvas({
             </div>
           </div>
         </div>
-        <span className={cn("text-[32px] font-medium", tone.sub)}>Based on real weather data</span>
+        <span className={cn("text-[28px] font-medium", tone.sub)}>Based on real weather data</span>
       </div>
     </div>
   );
