@@ -59,6 +59,7 @@ interface HaydayShareCardProps {
   locationName?: string;
   date: string;
   hasWindow?: boolean;
+  reason?: string;
   open?: boolean;
   onClose?: () => void;
 }
@@ -72,6 +73,7 @@ export default function HaydayShareCard({
   locationName,
   date,
   hasWindow = false,
+  reason,
   open = false,
   onClose
 }: HaydayShareCardProps) {
@@ -189,6 +191,7 @@ export default function HaydayShareCard({
                 locationName={locationName}
                 date={date}
                 hasWindow={hasWindow}
+                reason={reason}
                 tone={shareToneFor(verdict)}
               />
             </div>
@@ -246,6 +249,7 @@ function HaydayShareCardCanvas({
   locationName,
   date,
   hasWindow,
+  reason,
   tone
 }: {
   score: number;
@@ -256,6 +260,7 @@ function HaydayShareCardCanvas({
   locationName?: string;
   date: string;
   hasWindow: boolean;
+  reason?: string;
   tone: ShareTone;
 }) {
   const radius = 88;
@@ -285,24 +290,24 @@ function HaydayShareCardCanvas({
       </div>
 
       {locationName ? (
-        <span className={cn("relative mt-4 mb-10 max-w-full truncate text-[34px] font-medium", tone.sub)}>
+        <span className={cn("relative mt-4 mb-8 max-w-full truncate text-[34px] font-medium", tone.sub)}>
           {locationName}
         </span>
       ) : null}
 
       <div className="relative mt-auto flex flex-col items-center">
-        <span className={cn("text-[30px] font-bold uppercase tracking-[0.35em]", tone.sub)}>
+        <span className={cn("text-[28px] font-bold uppercase tracking-[0.35em]", tone.sub)}>
           Should I cut today?
         </span>
-        <h2 className="mt-6 text-center text-[128px] font-black leading-none tracking-tight">{verdict}</h2>
+        <h2 className="mt-5 text-center text-[104px] font-black leading-none tracking-tight">{verdict}</h2>
 
-        <div className={cn("relative mt-10 flex flex-col items-center")}>
+        <div className="relative mt-8 flex flex-col items-center">
           <div className="relative">
-            <svg width="240" height="240" viewBox="0 0 240 240" className="-rotate-90">
-              <circle cx="120" cy="120" r={radius} fill="none" strokeWidth="14" className={tone.track} />
+            <svg width="220" height="220" viewBox="0 0 220 220" className="-rotate-90">
+              <circle cx="110" cy="110" r={radius} fill="none" strokeWidth="14" className={tone.track} />
               <circle
-                cx="120"
-                cy="120"
+                cx="110"
+                cy="110"
                 r={radius}
                 fill="none"
                 strokeWidth="14"
@@ -312,40 +317,54 @@ function HaydayShareCardCanvas({
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[96px] font-black leading-none tracking-tight">{score}</span>
+              <span className="text-[88px] font-black leading-none tracking-tight">{score}</span>
             </div>
           </div>
-          <span className={cn("mt-3 text-[28px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
+          <span className={cn("mt-3 text-[26px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
         </div>
 
-        <p className={cn("mt-[56px] max-w-[840px] text-center text-[52px] font-semibold italic leading-snug", tone.sub)}>
+        {reason ? (
+          <p className={cn("mt-8 max-w-[820px] text-center text-[30px] font-semibold leading-snug", tone.sub)}>
+            {reason}
+          </p>
+        ) : null}
+
+        <p className={cn("mt-6 max-w-[840px] text-center text-[44px] font-semibold italic leading-snug", tone.sub)}>
           {phrase}
         </p>
       </div>
 
-      <div className="relative mt-auto flex w-full flex-col items-center gap-5">
+      <div className="relative mt-auto flex w-full flex-col items-center gap-4">
         {hasWindow ? (
-          <span className={cn("text-[28px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
+          <span className={cn("text-[26px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
             Recommended Timeline:
           </span>
         ) : null}
         <div className="flex items-center gap-6">
-          <div className={cn("flex items-center gap-4 rounded-2xl px-7 py-4", tone.chip)}>
-            <Scissors className="h-[38px] w-[38px]" strokeWidth={2.25} />
+          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-3", tone.chip)}>
+            <Scissors className="h-[34px] w-[34px]" strokeWidth={2.25} />
             <div>
-              <span className={cn("block text-[26px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
-              <span className="block text-[44px] font-black leading-none tracking-tight">{cutTime}</span>
+              <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
+              <span className="block text-[38px] font-black leading-none tracking-tight">{cutTime}</span>
             </div>
           </div>
-          <div className={cn("flex items-center gap-4 rounded-2xl px-7 py-4", tone.chip)}>
-            <Waves className="h-[38px] w-[38px]" strokeWidth={2.25} />
+          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-3", tone.chip)}>
+            <Waves className="h-[34px] w-[34px]" strokeWidth={2.25} />
             <div>
-              <span className={cn("block text-[26px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
-              <span className="block text-[44px] font-black leading-none tracking-tight">{baleTime}</span>
+              <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
+              <span className="block text-[38px] font-black leading-none tracking-tight">{baleTime}</span>
             </div>
           </div>
         </div>
-        <span className={cn("text-[28px] font-medium", tone.sub)}>Based on real weather data</span>
+        <span className={cn("text-[26px] font-medium", tone.sub)}>Evaluated against real drying conditions</span>
+        <a
+          href="https://hayday.homesteadcommerce.com"
+          target="_blank"
+          rel="noreferrer"
+          className={cn("text-[24px] font-semibold underline decoration-1 underline-offset-4", tone.sub)}
+        >
+          Check your field at hayday.homesteadcommerce.com
+        </a>
       </div>
     </div>
   );
