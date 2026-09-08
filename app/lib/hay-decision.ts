@@ -38,9 +38,6 @@ const CONDITIONING_FACTOR: Record<Conditioning, number> = {
   impeller: 0.9
 };
 
-export const WAIT_FOR_WINDOW_REASON = "Cannot start cutting now; wait for the next opportunity window below";
-export const BALEAGE_WAIT_FOR_WINDOW_REASON = "Cannot start baleage now; wait for the next opportunity window below";
-
 type CandidateEvaluation = {
   start: Date;
   end: Date;
@@ -431,7 +428,7 @@ function buildBaleageDecision(
     score: finalScore,
     dryingHours,
     recommendation: status,
-    reasons: buildBaleageReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, tooWet, overdryPenalty, hasCurrentWindow, bestWindow.exists, timelineBaleTime),
+    reasons: buildBaleageReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, tooWet, overdryPenalty, hasCurrentWindow, bestWindow.exists, timelineBaleTime, dryingHours),
     bestWindow,
     tedding: {
       recommended: false,
@@ -946,11 +943,7 @@ function buildReasons(
     reasons.push("Recent rainfall is keeping the field too wet to cut right now");
   } else if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push(
-        dryingHours > 40
-          ? `This swath needs about ${dryingHours} hours to dry; today's windows can't cure it safely. Wait for the upcoming window`
-          : WAIT_FOR_WINDOW_REASON
-      );
+      reasons.push(`This swath needs about ${dryingHours} hours to dry; no safe window starts today. Wait for the upcoming window`);
     } else {
       reasons.push("No viable cut windows in the next 7 days due to weather or field conditions");
     }
@@ -1192,7 +1185,8 @@ function buildBaleageReasons(
   overdryPenalty: number,
   hasCurrentWindow: boolean,
   hasBestWindow: boolean,
-  timelineBaleTime: Date | null
+  timelineBaleTime: Date | null,
+  dryingHours: number
 ) {
   const reasons: string[] = [];
   if (tooWet) {
@@ -1201,7 +1195,7 @@ function buildBaleageReasons(
   }
   if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push(BALEAGE_WAIT_FOR_WINDOW_REASON);
+      reasons.push(`The crop needs about ${dryingHours} hours to wilt; no safe start today. Wait for the upcoming window`);
     } else {
       reasons.push("No viable baleage windows in the next 7 days");
     }
