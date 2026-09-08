@@ -44,7 +44,7 @@ import { FieldSettings, HayDecision, DebugTrace, HourlyWeather, WeatherSummary }
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
 import { getScorePhrase } from "@/app/lib/phrases";
-import { formatSavedDays, WAIT_FOR_WINDOW_REASON, BALEAGE_WAIT_FOR_WINDOW_REASON } from "@/app/lib/hay-decision";
+import { formatSavedDays } from "@/app/lib/hay-decision";
 import HaydayShareCard from "@/components/HaydayShareCard";
 
 type ApiState =
@@ -545,10 +545,10 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         { icon: <Waves className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale }
       ];
 
-  const shareReasons = decision.reasons.filter(
-    (r) => r !== WAIT_FOR_WINDOW_REASON && r !== BALEAGE_WAIT_FOR_WINDOW_REASON
-  );
-  const shareReason = shareReasons[shareReasons.length - 1] ?? "";
+  const shareReason =
+    decision.recommendation === "Do Not Cut"
+      ? decision.reasons[0] ?? ""
+      : decision.reasons[decision.reasons.length - 1] ?? "";
 
   return (
     <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">

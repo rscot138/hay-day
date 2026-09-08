@@ -187,7 +187,7 @@ function buildDryHayDecision(
     score: finalScore,
     dryingHours,
     recommendation: status,
-    reasons: buildReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, hasCurrentWindow, bestWindow.exists, recentRainBlocked),
+    reasons: buildReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, hasCurrentWindow, bestWindow.exists, recentRainBlocked, dryingHours),
     bestWindow,
     tedding: {
       recommended: hasActionableCut && teddingRecommended,
@@ -938,12 +938,19 @@ function buildReasons(
   bestWindowMessage: string,
   hasCurrentWindow: boolean,
   hasBestWindow: boolean,
-  recentRainBlocked?: boolean
+  recentRainBlocked: boolean,
+  dryingHours: number
 ) {
   const reasons: string[] = [];
-  if (!hasCurrentWindow) {
+  if (recentRainBlocked) {
+    reasons.push("Recent rainfall is keeping the field too wet to cut right now");
+  } else if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push(WAIT_FOR_WINDOW_REASON);
+      reasons.push(
+        dryingHours > 40
+          ? `This swath needs about ${dryingHours} hours to dry; today's windows can't cure it safely. Wait for the upcoming window`
+          : WAIT_FOR_WINDOW_REASON
+      );
     } else {
       reasons.push("No viable cut windows in the next 7 days due to weather or field conditions");
     }
@@ -952,9 +959,7 @@ function buildReasons(
   else reasons.push("Drying hours are limited in the near window");
   if (rain.nextRainAt) reasons.push(`Rain possible around ${formatDateTime(new Date(rain.nextRainAt))}`);
   else reasons.push("No meaningful rain showing during curing");
-  if (recentRainBlocked) {
-    reasons.push("Recent rainfall is keeping the field too wet to cut right now");
-  } else {
+  if (!recentRainBlocked) {
     if (residualPenalty > 6) reasons.push("Moisture from recent rainfall is still present");
     if (dewPenalty > 5) reasons.push("Overnight dew risk may slow curing");
   }
