@@ -545,6 +545,11 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         { icon: <Waves className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale }
       ];
 
+  const shareReasons = decision.reasons.filter(
+    (r) => r !== WAIT_FOR_WINDOW_REASON && r !== BALEAGE_WAIT_FOR_WINDOW_REASON
+  );
+  const shareReason = shareReasons[shareReasons.length - 1] ?? "";
+
   return (
     <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
       <HaydayShareCard
@@ -558,7 +563,7 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         locationName={field.name?.trim() || undefined}
         date={new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
         hasWindow={hasCurrentWindow || decision.bestWindow.exists}
-        reason={decision.reasons.find((r) => r !== WAIT_FOR_WINDOW_REASON && r !== BALEAGE_WAIT_FOR_WINDOW_REASON) ?? ""}
+        reason={shareReason}
       />
       {showUpcomingWindow ? (
         <div className="flex flex-col gap-4">
@@ -1006,9 +1011,10 @@ function TimelineScreen({ decision, weather }: { decision: HayDecision; weather:
                     const isRain = hour.precipitationProbability >= 35 || hour.precipitationAmount > 0.01;
                     const isDrying = hour.dryingHour;
                     const hourNum = new Date(hour.time).getHours();
-                    return (
-                      <div
-                        key={hour.time}
+
+                      return (
+                        <div
+                          key={hour.time}
                         className={cn(
                           "relative flex h-32 w-10 shrink-0 flex-col justify-end rounded-lg border p-1 text-[10px]",
                           isRain

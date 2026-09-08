@@ -271,7 +271,7 @@ function HaydayShareCardCanvas({
   return (
     <div
       className={cn(
-        "relative flex h-[1080px] w-[1080px] flex-col items-center overflow-hidden px-[76px] py-[64px]",
+        "relative flex h-[1080px] w-[1080px] flex-col items-center overflow-hidden px-[76px] py-[46px]",
         tone.gradient,
         tone.text
       )}
@@ -290,7 +290,7 @@ function HaydayShareCardCanvas({
       </div>
 
       {locationName ? (
-        <span className={cn("relative mt-4 mb-8 flex max-w-full items-center gap-2.5", tone.sub)}>
+        <span className={cn("relative mt-4 mb-6 flex max-w-full items-center gap-2.5", tone.sub)}>
           <MapPin className="h-[30px] w-[30px] shrink-0" strokeWidth={2} />
           <span className="max-w-full truncate text-[34px] font-medium leading-tight">{locationName}</span>
         </span>
@@ -303,7 +303,7 @@ function HaydayShareCardCanvas({
         <h2 className="mt-5 text-center text-[104px] font-black leading-none tracking-tight">{verdict}</h2>
 
         {reason ? (
-          <p className={cn("mt-6 max-w-[820px] text-center text-[26px] font-semibold leading-snug", tone.sub)}>
+          <p className={cn("mt-5 max-w-[820px] text-center text-[26px] font-semibold leading-snug", tone.sub)}>
             {reason}
           </p>
         ) : null}
@@ -330,26 +330,26 @@ function HaydayShareCardCanvas({
           <span className={cn("mt-3 text-[26px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
         </div>
 
-        <p className={cn("mt-6 max-w-[840px] text-center text-[44px] font-semibold italic leading-snug", tone.sub)}>
+        <p className={cn("mt-5 max-w-[840px] text-center text-[42px] font-semibold italic leading-snug", tone.sub)}>
           {phrase}
         </p>
       </div>
 
-      <div className="relative mt-auto flex w-full flex-col items-center gap-4">
+      <div className="relative mt-auto flex w-full flex-col items-center gap-3">
         {hasWindow ? (
           <span className={cn("text-[26px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
             Recommended Timeline:
           </span>
         ) : null}
         <div className="flex items-center gap-6">
-          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-3", tone.chip)}>
+          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
             <Scissors className="h-[34px] w-[34px]" strokeWidth={2.25} />
             <div>
               <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
               <span className="block text-[38px] font-black leading-none tracking-tight">{cutTime}</span>
             </div>
           </div>
-          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-3", tone.chip)}>
+          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
             <Waves className="h-[34px] w-[34px]" strokeWidth={2.25} />
             <div>
               <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
