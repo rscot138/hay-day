@@ -943,7 +943,7 @@ function buildReasons(
     reasons.push("Recent rainfall is keeping the field too wet to cut right now");
   } else if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push(`This swath needs about ${dryingHours} hours to dry; no safe window starts today. Wait for the upcoming window`);
+      reasons.push(`Your field requires about ${dryingHours} hours to dry; no safe window starts today. Wait for the upcoming window`);
     } else {
       reasons.push("No viable cut windows in the next 7 days due to weather or field conditions");
     }
@@ -1195,7 +1195,7 @@ function buildBaleageReasons(
   }
   if (!hasCurrentWindow) {
     if (hasBestWindow) {
-      reasons.push(`The crop needs about ${dryingHours} hours to wilt; no safe start today. Wait for the upcoming window`);
+      reasons.push(`Your field requires about ${dryingHours} hours to wilt; no safe start today. Wait for the upcoming window`);
     } else {
       reasons.push("No viable baleage windows in the next 7 days");
     }
