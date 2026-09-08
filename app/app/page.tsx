@@ -799,6 +799,11 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
                   disabled={!proEmail}
                   onClick={() => {
                     if (!proEmail) return;
+                    const subject = encodeURIComponent("HayDay Pro Early Access");
+                    const body = encodeURIComponent(
+                      `Yes! I'd love to get early access to Pro features of HayDay! Keep me in the loop!\n\nName: ${proName}\nEmail: ${proEmail}`
+                    );
+                    window.location.href = `mailto:hello@homesteadcommerce.com?subject=${subject}&body=${body}`;
                     setProSubmitted(true);
                   }}
                 >
