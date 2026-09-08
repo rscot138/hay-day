@@ -140,6 +140,12 @@ function buildDryHayDecision(
         ? "Proceed With Caution"
         : "Do Not Cut"
     : "Do Not Cut";
+  const recentRainBlocked =
+    !hasCurrentWindow &&
+    input.weather.recent.precipitationLast24h > 0.5 &&
+    input.weather.recent.hoursSinceLastRain !== null &&
+    input.weather.recent.hoursSinceLastRain < 8 &&
+    hoursBetween(now, currentWindowStart) < 8;
   const finalScore = hasCurrentWindow
     ? score
     : bestWindow.exists
@@ -181,7 +187,7 @@ function buildDryHayDecision(
     score: finalScore,
     dryingHours,
     recommendation: status,
-    reasons: buildReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, hasCurrentWindow, bestWindow.exists),
+    reasons: buildReasons(finalScore, dryingMetrics, rain, residualPenalty, dewPenalty, bestWindow.message, hasCurrentWindow, bestWindow.exists, recentRainBlocked),
     bestWindow,
     tedding: {
       recommended: hasActionableCut && teddingRecommended,
@@ -931,7 +937,8 @@ function buildReasons(
   dewPenalty: number,
   bestWindowMessage: string,
   hasCurrentWindow: boolean,
-  hasBestWindow: boolean
+  hasBestWindow: boolean,
+  recentRainBlocked?: boolean
 ) {
   const reasons: string[] = [];
   if (!hasCurrentWindow) {
@@ -945,8 +952,12 @@ function buildReasons(
   else reasons.push("Drying hours are limited in the near window");
   if (rain.nextRainAt) reasons.push(`Rain possible around ${formatDateTime(new Date(rain.nextRainAt))}`);
   else reasons.push("No meaningful rain showing during curing");
-  if (residualPenalty > 6) reasons.push("Moisture from recent rainfall is still present");
-  if (dewPenalty > 5) reasons.push("Overnight dew risk may slow curing");
+  if (recentRainBlocked) {
+    reasons.push("Recent rainfall is keeping the field too wet to cut right now");
+  } else {
+    if (residualPenalty > 6) reasons.push("Moisture from recent rainfall is still present");
+    if (dewPenalty > 5) reasons.push("Overnight dew risk may slow curing");
+  }
   if (score < 70 && hasCurrentWindow) reasons.push(bestWindowMessage);
   return reasons.slice(0, 4);
 }
