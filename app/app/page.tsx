@@ -45,6 +45,7 @@ import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
 import { getScorePhrase } from "@/app/lib/phrases";
 import { formatSavedDays } from "@/app/lib/hay-decision";
+import { defaultUnitSystem, formatRain, formatTemperature, UnitSystem } from "@/app/lib/units";
 import HaydayShareCard from "@/components/HaydayShareCard";
 
 type ApiState =
@@ -58,6 +59,7 @@ type ApiResult = {
 };
 
 const STORAGE_KEY = "hay-decision-field-v1";
+const UNITS_KEY = "hay-day-units";
 
 const defaultField: FieldSettings = {
   name: "",
@@ -127,6 +129,19 @@ export default function Home() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [unitsPref, setUnitsPref] = useState<UnitSystem | null>(null);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(UNITS_KEY);
+    if (saved === "imperial" || saved === "metric") setUnitsPref(saved);
+  }, []);
+
+  const effectiveUnits: UnitSystem = unitsPref ?? defaultUnitSystem(field.latitude ?? NaN, field.longitude ?? NaN);
+
+  const setUnits = (units: UnitSystem) => {
+    setUnitsPref(units);
+    window.localStorage.setItem(UNITS_KEY, units);
+  };
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -283,6 +298,27 @@ export default function Home() {
             <span className="hidden items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-card sm:flex">
               <Clock className="h-3.5 w-3.5" /> {updatedLabel}
             </span>
+            <div
+              className="flex items-center rounded-lg border border-border/70 bg-card p-0.5 shadow-card"
+              title="Units"
+            >
+              {(["imperial", "metric"] as const).map((unit) => (
+                <button
+                  key={unit}
+                  type="button"
+                  onClick={() => setUnits(unit)}
+                  aria-pressed={effectiveUnits === unit}
+                  className={cn(
+                    "rounded-md px-2 py-1 text-xs font-bold transition-colors",
+                    effectiveUnits === unit
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {unit === "imperial" ? "\u00b0F" : "\u00b0C"}
+                </button>
+              ))}
+            </div>
             <Button
               type="button"
               variant="outline"
@@ -384,17 +420,17 @@ export default function Home() {
         ) : null}
 
         {debugMode && decision ? (
-          <DebugScreen decision={decision} />
+          <DebugScreen decision={decision} units={effectiveUnits} />
         ) : (
           <>
             {activeTab === "Home" && decision ? (
               <HomeScreen field={field} decision={decision} onFieldChange={saveField} />
             ) : null}
             {activeTab === "Breakdown" && decision ? (
-              <BreakdownScreen decision={decision} weather={result.weather} />
+              <BreakdownScreen decision={decision} weather={result.weather} units={effectiveUnits} />
             ) : null}
             {activeTab === "Timeline" && decision && result ? (
-              <TimelineScreen decision={decision} weather={result.weather} />
+              <TimelineScreen decision={decision} weather={result.weather} units={effectiveUnits} />
             ) : null}
             {activeTab === "Field" ? (
               <FieldSetup
@@ -854,7 +890,7 @@ function ActionStepper({ steps }: { steps: { icon: React.ReactNode; label: strin
   );
 }
 
-function BreakdownScreen({ decision, weather }: { decision: HayDecision; weather: WeatherSummary }) {
+function BreakdownScreen({ decision, weather, units }: { decision: HayDecision; weather: WeatherSummary; units: UnitSystem }) {
   return (
     <section className="grid gap-4 md:grid-cols-3">
       <MetricCard
@@ -874,8 +910,8 @@ function BreakdownScreen({ decision, weather }: { decision: HayDecision; weather
         summary={decision.breakdown.rain.summary}
         stats={[
           ["Max probability", `${decision.breakdown.rain.maxProbability}%`],
-          ["Rain in curing", `${decision.breakdown.rain.amountDuringCuring} in`],
-          ["Last 24h", `${weather.recent.precipitationLast24h} in`],
+          ["Rain in curing", formatRain(decision.breakdown.rain.amountDuringCuring, units)],
+          ["Last 24h", formatRain(weather.recent.precipitationLast24h, units)],
           ["Since rain", weather.recent.hoursSinceLastRain === null ? "No recent rain" : `${weather.recent.hoursSinceLastRain} h`]
         ]}
       />
@@ -915,7 +951,7 @@ function findHourIndex(hours: HourlyWeather[], timeStr: string | null): number |
   return null;
 }
 
-function TimelineScreen({ decision, weather }: { decision: HayDecision; weather: WeatherSummary }) {
+function TimelineScreen({ decision, weather, units }: { decision: HayDecision; weather: WeatherSummary; units: UnitSystem }) {
   const isBaleage = decision.harvestMethod === "baleage";
   const hours = weather.hourly.filter((hour) => new Date(hour.time) >= new Date()).slice(0, 168);
 
@@ -1025,7 +1061,7 @@ function TimelineScreen({ decision, weather }: { decision: HayDecision; weather:
                                 ? "border-stone-200 bg-gradient-to-b from-stone-50 to-stone-100"
                                 : "border-slate-300 bg-gradient-to-b from-slate-50 to-slate-200"
                         )}
-                        title={`${hour.temperature}°F, ${hour.windSpeed} mph wind, ${hour.relativeHumidity}% RH`}
+                        title={`${formatTemperature(hour.temperature, units)}, ${hour.windSpeed} mph wind, ${hour.relativeHumidity}% RH`}
                       >
                         <div className="mb-auto text-center text-muted-foreground">
                           {hourNum === 0 ? "12a" : hourNum < 12 ? `${hourNum}a` : hourNum === 12 ? "12p" : `${hourNum - 12}p`}
@@ -1190,7 +1226,7 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
   );
 }
 
-function DebugScreen({ decision }: { decision: HayDecision }) {
+function DebugScreen({ decision, units }: { decision: HayDecision; units: UnitSystem }) {
   const trace = decision.debug;
   if (!trace) return <Card><CardContent className="p-4 text-muted-foreground">No debug data available.</CardContent></Card>;
 
@@ -1234,7 +1270,7 @@ function DebugScreen({ decision }: { decision: HayDecision }) {
       </Section>
 
       <Section title="Recent Conditions">
-        <KV label="Precip last 24h" value={`${trace.recent.precipitationLast24h} in`} />
+        <KV label="Precip last 24h" value={formatRain(trace.recent.precipitationLast24h, units)} />
         <KV label="Last rain" value={trace.recent.lastRainAt ?? "None"} />
         <KV label="Hours since rain" value={trace.recent.hoursSinceLastRain !== null ? `${trace.recent.hoursSinceLastRain}h` : "N/A"} />
       </Section>
@@ -1365,10 +1401,10 @@ function DebugScreen({ decision }: { decision: HayDecision }) {
                   return (
                     <tr key={i} className="border-t">
                       <td className="p-2 whitespace-nowrap">{d.toLocaleDateString()} {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
-                      <td className="p-2 text-right">{h.temperature.toFixed(0)}\u00b0</td>
+                      <td className="p-2 text-right">{formatTemperature(h.temperature, units)}</td>
                       <td className="p-2 text-right">{h.relativeHumidity}</td>
                       <td className="p-2 text-right">{h.windSpeed}</td>
-                      <td className="p-2 text-right">{h.precipitationAmount > 0 ? h.precipitationAmount.toFixed(2) : "\u2014"}</td>
+                      <td className="p-2 text-right">{h.precipitationAmount > 0 ? formatRain(h.precipitationAmount, units) : "\u2014"}</td>
                       <td className="p-2 text-right">{h.sunFactor.toFixed(2)}</td>
                       <td className="p-2 text-center">{h.dryingHour ? "\u2600" : "\u2014"}</td>
                       <td className="p-2 text-center">{h.dewRisk ? "\ud83c\udf19" : "\u2014"}</td>
