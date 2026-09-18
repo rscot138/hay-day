@@ -27,15 +27,14 @@ import {
   Share2,
   Shield,
   Shovel,
-  Sprout,
   Sun,
   Sunrise,
   Timer,
   Tractor,
   Waves,
-  Wheat,
-  Wind
+  Wheat
 } from "lucide-react";
+import RoundBale from "@/components/RoundBale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -278,7 +277,7 @@ export default function Home() {
             <header className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-card">
-                  <Sprout className="h-5 w-5" />
+                  <RoundBale className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -570,15 +569,15 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
   const steps = isBaleage
     ? [
         { icon: <Scissors className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
-        { icon: <Wind className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
-        { icon: <Waves className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale },
+        { icon: <Waves className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
+        { icon: <RoundBale className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale },
         { icon: <Shield className="h-4 w-4" />, label: "Wrap within 6h", value: decision.timeline.wrap || "Wrap immediately" }
       ]
     : [
         { icon: <Scissors className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
         { icon: <Shovel className="h-4 w-4" />, label: "Ted (optional)", value: decision.timeline.ted || decision.tedding.window, muted: true },
-        { icon: <Wind className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
-        { icon: <Waves className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale }
+        { icon: <Waves className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
+        { icon: <RoundBale className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale }
       ];
 
   const shareReason =
@@ -1196,8 +1195,8 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
             <ActionStepper
               steps={[
                 { icon: <Scissors className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
-                { icon: <Wind className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
-                { icon: <Waves className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale },
+                { icon: <Waves className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
+                { icon: <RoundBale className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale },
                 { icon: <Shield className="h-4 w-4" />, label: "Wrap", value: decision.timeline.wrap || "Wrap immediately" }
               ]}
             />
@@ -1216,8 +1215,8 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
           <CardContent className="grid gap-3">
             <ActionRow icon={<Clock className="h-4 w-4" />} label="Tedding window" value={decision.tedding.window} />
             <ActionRow icon={<Timer className="h-4 w-4" />} label="Saved time" value={decision.tedding.savedDays > 0 ? `~${formatSavedDays(decision.tedding.savedDays)}` : "No change"} />
-            <ActionRow icon={<Wind className="h-4 w-4" />} label="Rake" value={decision.timeline.rake} />
-            <ActionRow icon={<Waves className="h-4 w-4" />} label="With tedding" value={decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime ? "No change" : decision.comparison.withTedding.baleTime} />
+            <ActionRow icon={<Waves className="h-4 w-4" />} label="Rake" value={decision.timeline.rake} />
+            <ActionRow icon={<RoundBale className="h-4 w-4" />} label="With tedding" value={decision.comparison.withTedding.baleTime === decision.comparison.withoutTedding.baleTime ? "No change" : decision.comparison.withTedding.baleTime} />
             <ActionRow icon={<CloudRain className="h-4 w-4" />} label="Without" value={decision.comparison.withoutTedding.baleTime} muted />
           </CardContent>
         </Card>
