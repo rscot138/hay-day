@@ -26,10 +26,10 @@ import {
   Settings,
   Share2,
   Shield,
-  Shovel,
   Sun,
   Sunrise,
   Timer,
+  Tornado,
   Tractor,
   Waves,
   Wheat
@@ -575,7 +575,7 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
       ]
     : [
         { icon: <Scissors className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
-        { icon: <Shovel className="h-4 w-4" />, label: "Ted (optional)", value: decision.timeline.ted || decision.tedding.window, muted: true },
+        { icon: <Tornado className="h-4 w-4" />, label: "Ted (optional)", value: decision.timeline.ted || decision.tedding.window, muted: true },
         { icon: <Waves className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
         { icon: <RoundBale className="h-4 w-4" />, label: "Bale", value: decision.timeline.bale }
       ];
@@ -1159,7 +1159,7 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Shovel className="h-4 w-4" />
+<Tornado className="h-4 w-4" />
               </div>
               Tedding &amp; Raking
             </CardTitle>
