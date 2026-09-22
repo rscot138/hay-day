@@ -351,7 +351,7 @@ function HaydayShareCardCanvas({
             </div>
           </div>
           <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
-            <RoundBale className="h-[34px] w-[34px]" strokeWidth={2.25} />
+            <RoundBale className="h-[34px] w-[34px]" />
             <div>
               <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
               <span className="block text-[38px] font-black leading-none tracking-tight">{baleTime}</span>
