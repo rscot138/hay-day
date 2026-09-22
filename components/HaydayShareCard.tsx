@@ -360,12 +360,12 @@ function HaydayShareCardCanvas({
         </div>
         <span className={cn("text-[26px] font-medium", tone.sub)}>Evaluated against real drying conditions</span>
         <a
-          href="https://hayday.homesteadcommerce.com"
+          href="https://www.HayDays.app"
           target="_blank"
           rel="noreferrer"
           className={cn("text-[24px] font-semibold underline decoration-1 underline-offset-4", tone.sub)}
         >
-          Check your field at hayday.homesteadcommerce.com
+          Check your field at www.HayDays.app
         </a>
       </div>
     </div>
