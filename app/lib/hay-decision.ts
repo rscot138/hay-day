@@ -806,10 +806,27 @@ function evaluateCandidateWindow(
 
   const noRainInForecast = rain.amount < 0.02 && rain.maxProbability < 30;
   const noRainInExtended = getRainMetrics(first48).amount < 0.05;
-  const extendedDryingHours = getDryingMetrics(first48).dryingHours;
-  const effectiveDryingHours = noRainInForecast && noRainInExtended ? extendedDryingHours : metrics.dryingHours;
 
-  traceChecks?.push({ label: "Drying hours in window", passed: effectiveDryingHours >= 16, value: String(effectiveDryingHours), threshold: noRainInForecast && noRainInExtended ? `>= 16 (extended 48h, no rain)` : ">= 16" });
+  let effectiveDryingHours: number;
+  let dryingHoursThreshold: string;
+
+  if (noRainInForecast && noRainInExtended) {
+    const firstRainAfterStart = hourly.find(
+      (h) => new Date(h.time) > start && (h.precipitationAmount > 0.02 || h.precipitationProbability >= 35)
+    );
+    const lastForecast = hourly[hourly.length - 1];
+    const rainCutoff = firstRainAfterStart ? new Date(firstRainAfterStart.time) : new Date(lastForecast.time);
+    const extendedEnd = rainCutoff > addHours(start, 48) ? rainCutoff : addHours(start, 48);
+    const extendedHours = forecastBetween(hourly, start, extendedEnd);
+    effectiveDryingHours = getDryingMetrics(extendedHours).dryingHours;
+    const extendedDays = Math.round((extendedEnd.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    dryingHoursThreshold = `>= 16 (extended ${extendedDays}d, no rain)`;
+  } else {
+    effectiveDryingHours = metrics.dryingHours;
+    dryingHoursThreshold = ">= 16";
+  }
+
+  traceChecks?.push({ label: "Drying hours in window", passed: effectiveDryingHours >= 16, value: String(effectiveDryingHours), threshold: dryingHoursThreshold });
   if (effectiveDryingHours < 16) return null;
   traceChecks?.push({ label: "Humid hours (daytime, RH>80%)", passed: humidHours <= 12, value: String(humidHours), threshold: "<= 12" });
   if (humidHours > 12) return null;
