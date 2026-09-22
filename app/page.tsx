@@ -20,7 +20,7 @@ export default function LandingPage() {
 
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-20 text-center">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-white shadow-card backdrop-blur-sm">
-          <RoundBale className="h-8 w-8" />
+          <RoundBale className="h-16 w-16" />
         </div>
 
         <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
