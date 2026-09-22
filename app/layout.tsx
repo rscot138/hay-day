@@ -3,7 +3,7 @@ import "./globals.css";
 import { PostHogProvider } from "@/app/lib/analytics";
 
 export const metadata: Metadata = {
-  title: "Hay Day | Is today a Hay Day?",
+  title: "Hay Days | Is today a Hay Day?",
   description: "Field-specific hay cutting decisions powered by live weather data. Free, no account needed."
 };
 

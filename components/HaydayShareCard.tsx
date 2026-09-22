@@ -150,8 +150,8 @@ export default function HaydayShareCard({
       const file = new File([blob], "hayday-decision.png", { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: "Hay Day",
-          text: `Hay Day says: ${verdict} (Score: ${score}/100)`,
+          title: "Hay Days",
+          text: `Hay Days says: ${verdict} (Score: ${score}/100)`,
           files: [file]
         });
         track("share_card_share", { verdict, score });
@@ -169,7 +169,7 @@ export default function HaydayShareCard({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="flex w-full max-w-[440px] flex-col items-center gap-4 sm:max-w-[480px]">
         <div className="flex w-full items-center justify-between">
-          <span className="text-sm font-bold tracking-widest text-white/90">Hay Day</span>
+          <span className="text-sm font-bold tracking-widest text-white/90">Hay Days</span>
           <button
             type="button"
             onClick={onClose}
