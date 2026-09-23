@@ -1004,11 +1004,11 @@ function computeRakeTime(cutStart: Date, baleTime: Date | null, dryingHours: num
 function findNextDryOperationHourBefore(date: Date, before: Date, hourly: HourlyWeather[] | undefined): Date {
   let candidate = snapOperationTime(date, hourly);
   for (let i = 0; i < 48; i += 1) {
-    if (candidate >= before) return date;
+    if (candidate >= before) break;
     if (!hasRainAt(hourly, candidate)) return candidate;
     candidate = snapOperationTime(addHours(candidate, 1), hourly);
   }
-  return date;
+  return snapOperationTime(date, hourly);
 }
 
 function evaluateBaleageCandidateWindow(
