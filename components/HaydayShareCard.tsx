@@ -343,21 +343,23 @@ function HaydayShareCardCanvas({
             Recommended Timeline:
           </span>
         ) : null}
-        <div className="flex items-center gap-6">
-          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
-            <GrassCut className="h-[68px] w-[68px]" />
+        <div className={cn("flex items-center gap-6", !hasWindow && "w-full")}>
+          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip, !hasWindow && "flex-1 justify-center")}>
+            <GrassCut className={cn("h-[68px] w-[68px]", !hasWindow && "h-[84px] w-[84px]")} />
             <div>
               <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
               <span className="block text-[38px] font-black leading-none tracking-tight">{cutTime}</span>
             </div>
           </div>
-          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
-            <RoundBale className="h-[68px] w-[68px]" />
-            <div>
-              <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
-              <span className="block text-[38px] font-black leading-none tracking-tight">{baleTime}</span>
+          {hasWindow ? (
+            <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
+              <RoundBale className="h-[68px] w-[68px]" />
+              <div>
+                <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
+                <span className="block text-[38px] font-black leading-none tracking-tight">{baleTime}</span>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
         <span className={cn("text-[26px] font-medium", tone.sub)}>Evaluated against real drying conditions</span>
         <a
