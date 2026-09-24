@@ -46,6 +46,7 @@ import { getScorePhrase } from "@/app/lib/phrases";
 import { formatSavedDays } from "@/app/lib/hay-decision";
 import { defaultUnitSystem, formatRain, formatTemperature, UnitSystem } from "@/app/lib/units";
 import HaydayShareCard from "@/components/HaydayShareCard";
+import AlertSubscribe from "@/components/AlertSubscribe";
 
 type ApiState =
   | { status: "idle" | "locating" | "loading"; error?: undefined }
@@ -811,6 +812,15 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         <p className="px-1 text-xs leading-relaxed text-muted-foreground">
           Field profile: {field.cropType}, {field.swathDensity} swath, {field.conditioning} conditioning. {isBaleage ? "Baleage mode." : "Dry hay mode."}
         </p>
+
+        {field.latitude && field.longitude ? (
+          <AlertSubscribe
+            latitude={field.latitude}
+            longitude={field.longitude}
+            cropType={field.cropType}
+            mode={field.harvestMethod}
+          />
+        ) : null}
 
         <Card className="border-secondary/30 bg-secondary/5">
           <CardContent className="p-5">
