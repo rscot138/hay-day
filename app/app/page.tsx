@@ -872,7 +872,7 @@ function ActionStepper({ steps }: { steps: { icon: React.ReactNode; label: strin
           <div
             className={cn(
               "z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-card text-primary shadow-card",
-              i === 0 && "border-primary bg-primary text-primary-foreground",
+              i === 0 && "border-primary bg-card text-primary",
               step.muted && "border-dashed text-muted-foreground"
             )}
           >
