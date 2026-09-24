@@ -4,7 +4,7 @@ export default function GrassCut({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 64 64"
-      className={cn("h-5 w-5", className)}
+      className={cn("h-7 w-7", className)}
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       fill="none"
