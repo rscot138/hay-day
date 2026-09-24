@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toBlob, toPng } from "html-to-image";
-import { Check, Copy, Download, MapPin, Scissors, Share2, Wheat, X } from "lucide-react";
+import { Check, Copy, Download, MapPin, Share2, Wheat, X } from "lucide-react";
 import RoundBale from "@/components/RoundBale";
+import GrassCut from "@/components/GrassCut";
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
 
@@ -344,7 +345,7 @@ function HaydayShareCardCanvas({
         ) : null}
         <div className="flex items-center gap-6">
           <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
-            <Scissors className="h-[34px] w-[34px]" strokeWidth={2.25} />
+            <GrassCut className="h-[34px] w-[34px]" />
             <div>
               <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
               <span className="block text-[38px] font-black leading-none tracking-tight">{cutTime}</span>

@@ -22,7 +22,6 @@ import {
   Moon,
   X,
   RefreshCw,
-  Scissors,
   Settings,
   Share2,
   Shield,
@@ -35,6 +34,7 @@ import {
   Wheat
 } from "lucide-react";
 import RoundBale from "@/components/RoundBale";
+import GrassCut from "@/components/GrassCut";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -568,13 +568,13 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
 
   const steps = isBaleage
     ? [
-        { icon: <Scissors className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
+        { icon: <GrassCut className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
         { icon: <Waves className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
         { icon: <RoundBale className="h-8 w-8" />, label: "Bale", value: decision.timeline.bale },
         { icon: <Shield className="h-4 w-4" />, label: "Wrap within 6h", value: decision.timeline.wrap || "Wrap immediately" }
       ]
     : [
-        { icon: <Scissors className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
+        { icon: <GrassCut className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
         { icon: <Tornado className="h-4 w-4" />, label: "Ted (optional)", value: decision.timeline.ted || decision.tedding.window, muted: true },
         { icon: <Waves className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
         { icon: <RoundBale className="h-8 w-8" />, label: "Bale", value: decision.timeline.bale }
@@ -1194,7 +1194,7 @@ function TeddingScreen({ decision }: { decision: HayDecision }) {
           <CardContent>
             <ActionStepper
               steps={[
-                { icon: <Scissors className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
+        { icon: <GrassCut className="h-4 w-4" />, label: "Cut", value: decision.timeline.cut },
                 { icon: <Waves className="h-4 w-4" />, label: "Rake", value: decision.timeline.rake },
                 { icon: <RoundBale className="h-8 w-8" />, label: "Bale", value: decision.timeline.bale },
                 { icon: <Shield className="h-4 w-4" />, label: "Wrap", value: decision.timeline.wrap || "Wrap immediately" }
