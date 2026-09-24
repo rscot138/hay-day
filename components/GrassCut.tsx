@@ -1,6 +1,14 @@
-export default function GrassCut({ className = "h-4 w-4" }: { className?: string }) {
+import { cn } from "@/app/lib/utils";
+
+export default function GrassCut({ className }: { className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" className={className} fill="none">
+    <svg
+      viewBox="0 0 64 64"
+      className={cn("h-5 w-5", className)}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      fill="none"
+    >
       <path d="m10 52 2-12 4 12z" fill="#4caf50" />
       <path d="m14 52 3-12 4 12z" fill="#81c784" />
       <path d="m19 52 3-12 4 12z" fill="#4caf50" />
