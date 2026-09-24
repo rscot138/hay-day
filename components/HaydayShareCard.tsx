@@ -345,7 +345,7 @@ function HaydayShareCardCanvas({
         ) : null}
         <div className="flex items-center gap-6">
           <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
-            <GrassCut className="h-[34px] w-[34px]" />
+            <GrassCut className="h-[68px] w-[68px]" />
             <div>
               <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
               <span className="block text-[38px] font-black leading-none tracking-tight">{cutTime}</span>
