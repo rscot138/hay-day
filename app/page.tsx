@@ -51,6 +51,9 @@ export default function LandingPage() {
       </div>
 
       <footer className="absolute bottom-0 w-full border-t border-white/10 py-4 text-center text-xs font-medium text-white/50">
+        <p className="text-sm text-white/40 mt-2 max-w-md mx-auto">
+          Built to help you make the call - not make it for you. Weather shifts fast, so always use your own judgment.
+        </p>
         Powered by{" "}
         <a href="https://www.homesteadcommerce.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white transition-colors">
           Homestead Commerce

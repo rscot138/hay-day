@@ -466,6 +466,9 @@ export default function Home() {
         ) : null}
       </div>
       <footer className="border-t border-border/50 py-4 text-center text-xs font-medium text-muted-foreground">
+        <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">
+          Built to help you make the call - not make it for you. Weather shifts fast, so always use your own judgment.
+        </p>
         Powered by{" "}
         <a href="https://www.homesteadcommerce.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground transition-colors">
           Homestead Commerce
