@@ -7,6 +7,7 @@ import RoundBale from "@/components/RoundBale";
 import GrassCut from "@/components/GrassCut";
 import { cn } from "@/app/lib/utils";
 import { track } from "@/app/lib/analytics";
+import { getDryingConfidence, getTimePressure, getTimePressureLabel, type DryingConfidence, type TimePressure } from "@/app/lib/phrases";
 
 type ShareTone = {
   gradient: string;
@@ -62,6 +63,7 @@ interface HaydayShareCardProps {
   date: string;
   hasWindow?: boolean;
   reason?: string;
+  dryingHours?: number;
   open?: boolean;
   onClose?: () => void;
 }
@@ -76,6 +78,7 @@ export default function HaydayShareCard({
   date,
   hasWindow = false,
   reason,
+  dryingHours,
   open = false,
   onClose
 }: HaydayShareCardProps) {
@@ -194,6 +197,7 @@ export default function HaydayShareCard({
                 date={date}
                 hasWindow={hasWindow}
                 reason={reason}
+                dryingHours={dryingHours}
                 tone={shareToneFor(verdict)}
               />
             </div>
@@ -252,6 +256,7 @@ function HaydayShareCardCanvas({
   date,
   hasWindow,
   reason,
+  dryingHours,
   tone
 }: {
   score: number;
@@ -263,12 +268,16 @@ function HaydayShareCardCanvas({
   date: string;
   hasWindow: boolean;
   reason?: string;
+  dryingHours?: number;
   tone: ShareTone;
 }) {
   const radius = 88;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(100, score));
   const filled = circumference * (clamped / 100);
+  const dryingConfidence = getDryingConfidence(score);
+  const timePressure = getTimePressure(score, dryingHours ?? 72);
+  const pressureLabel = getTimePressureLabel(timePressure);
 
   return (
     <div
@@ -300,7 +309,7 @@ function HaydayShareCardCanvas({
 
       <div className="relative mt-auto flex flex-col items-center">
         <span className={cn("text-[28px] font-bold uppercase tracking-[0.35em]", tone.sub)}>
-          Should I cut today?
+          Will it dry?
         </span>
         <h2 className="mt-5 text-center text-[104px] font-black leading-none tracking-tight">{verdict}</h2>
 
@@ -325,16 +334,35 @@ function HaydayShareCardCanvas({
                 className={tone.ring}
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[88px] font-black leading-none tracking-tight">{score}</span>
             </div>
           </div>
-          <span className={cn("mt-3 text-[26px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
+          <div className="mt-3 flex flex-col items-center gap-1">
+            <span className={cn("text-[22px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
+            <span className={cn(
+              "text-[28px] font-black uppercase tracking-wider",
+              dryingConfidence === "Dries Easy" && "text-green-300",
+              dryingConfidence === "Watch It" && "text-yellow-300",
+              dryingConfidence === "Tough Dry" && "text-red-300"
+            )}>
+              {dryingConfidence}
+            </span>
+          </div>
         </div>
 
         <p className={cn("mt-5 max-w-[840px] text-center text-[42px] font-semibold italic leading-snug", tone.sub)}>
           {phrase}
         </p>
+
+        {pressureLabel ? (
+          <p className={cn("mt-3 text-[28px] font-bold uppercase tracking-wider", 
+            timePressure === "short" && "text-red-300",
+            timePressure === "moderate" && "text-yellow-300"
+          )}>
+            {pressureLabel}
+          </p>
+        ) : null}
       </div>
 
       <div className="relative mt-auto flex w-full flex-col items-center gap-3">

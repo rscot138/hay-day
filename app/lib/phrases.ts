@@ -1,52 +1,41 @@
 export const HIGH_SCORE_PHRASES = [
-  "Mow it like you stole it",
-  "This is what you wait for",
-  "Windows don’t get much better than this",
-  "Time to make hay",
-  "Send it",
-  "If you're gonna cut, this is the moment",
+  "Should dry down clean",
+  "This one should cure out right",
+  "Low humidity and heat should carry this through",
   "Conditions are working with you today",
-  "This one’s about as good as it gets"
+  "This one's about as good as it gets"
 ];
 
 export const GOOD_SCORE_PHRASES = [
-  "This is a solid window",
-  "You’ve got a good shot here",
-  "Conditions are lining up nicely",
-  "Worth getting after it",
-  "This should dry down well",
-  "A good opportunity if you're ready",
-  "Weather’s on your side (mostly)"
+  "This one should dry, but keep an eye on it",
+  "You've got a shot here — just watch the humidity",
+  "Worth getting after it if you stay on top of it",
+  "Should work, but don't cut corners on timing",
+  "Weather's on your side (mostly)"
 ];
 
 export const MID_SCORE_PHRASES = [
-  "Tight window, so plan it right",
-  "It’ll work, but keep an eye on it",
-  "You’re threading the needle here",
-  "Could go either way",
-  "Not perfect, but workable",
-  "You’ll want to stay flexible",
-  "Watch the forecast closely on this one"
+  "Might dry — but you'll be watching it",
+  "You'll need sun and some luck to finish it off",
+  "Borderline… could go either way",
+  "Not perfect, but workable if conditions hold",
+  "You'll want to stay flexible on this one"
 ];
 
 export const LOW_SCORE_PHRASES = [
-  "You’d be pushing it",
-  "This one’s a gamble",
-  "Conditions aren’t doing you favors",
-  "Risk is stacking up here",
-  "Probably not worth the shot",
-  "You’d need some luck on your side",
-  "Not a comfortable window"
+  "Gonna be tough to get this to dry",
+  "You'll be fighting moisture on this one",
+  "Humidity's gonna hang around — tough to finish drying",
+  "This one's a gamble in these conditions",
+  "Risk is stacking up here"
 ];
 
 export const BAD_SCORE_PHRASES = [
   "Nothing to gain right now",
-  "You’d be fighting the weather",
+  "You'd be fighting the weather all the way",
   "Fields need time, so sit tight",
-  "This one’s not ready yet",
-  "Better days are coming",
-  "Let this pass",
-  "Patience pays here"
+  "This one's not ready yet — let it dry out",
+  "Let this pass"
 ];
 
 const LAST_PHRASE_KEY = "lastPhrase";
@@ -84,4 +73,31 @@ export function getScorePhrase(score: number): string {
   }
 
   return phrase;
+}
+
+export type DryingConfidence = "Dries Easy" | "Watch It" | "Tough Dry";
+
+export function getDryingConfidence(score: number): DryingConfidence {
+  if (score >= 80) return "Dries Easy";
+  if (score >= 65) return "Watch It";
+  return "Tough Dry";
+}
+
+export type TimePressure = "short" | "moderate" | null;
+
+export function getTimePressure(score: number, dryingHours: number): TimePressure {
+  if (score < 65 && dryingHours < 48) return "short";
+  if (score >= 65 && score < 80 && dryingHours < 60) return "moderate";
+  return null;
+}
+
+export function getTimePressureLabel(pressure: TimePressure): string {
+  switch (pressure) {
+    case "short":
+      return "Short window — don't wait";
+    case "moderate":
+      return "Narrow drying window";
+    default:
+      return "";
+  }
 }

@@ -602,6 +602,7 @@ function HomeScreen({ field, decision, onFieldChange }: { field: FieldSettings; 
         date={new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
         hasWindow={hasCurrentWindow || decision.bestWindow.exists}
         reason={shareReason}
+        dryingHours={decision.dryingHours}
       />
       {showUpcomingWindow ? (
         <div className="flex flex-col gap-4">
