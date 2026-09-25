@@ -1511,6 +1511,7 @@ function FieldSetup({
               </Select>
             </Label>
             <Label text="Harvest method">
+              <p className="text-xs text-muted-foreground mb-1.5">Determines drying window length</p>
               <Select value={draft.harvestMethod} onChange={(event) => updateAndSave({ ...draft, harvestMethod: event.target.value as FieldSettings["harvestMethod"] })}>
                 <option value="dry_hay">Dry hay</option>
                 <option value="baleage">Baleage (wrapped)</option>
