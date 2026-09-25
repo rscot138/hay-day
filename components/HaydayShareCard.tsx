@@ -295,7 +295,7 @@ function HaydayShareCardCanvas({
       <div className="relative flex w-full items-start justify-between">
         <div className="flex items-center gap-4">
           <Wheat className="h-[52px] w-[52px]" strokeWidth={2} />
-          <span className="text-[56px] font-black leading-none tracking-tight">HayDay</span>
+          <span className="text-[56px] font-black leading-none tracking-tight">Hay Days</span>
         </div>
         <span className={cn("pt-2 text-[34px] font-semibold", tone.sub)}>{date}</span>
       </div>
