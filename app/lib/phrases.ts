@@ -8,14 +8,14 @@ export const HIGH_SCORE_PHRASES = [
 
 export const GOOD_SCORE_PHRASES = [
   "This one should dry, but keep an eye on it",
-  "You've got a shot here — just watch the humidity",
+  "You've got a shot here, just watch the humidity",
   "Worth getting after it if you stay on top of it",
   "Should work, but don't cut corners on timing",
   "Weather's on your side (mostly)"
 ];
 
 export const MID_SCORE_PHRASES = [
-  "Might dry — but you'll be watching it",
+  "Might dry, but you'll be watching it",
   "You'll need sun and some luck to finish it off",
   "Borderline… could go either way",
   "Not perfect, but workable if conditions hold",
@@ -25,7 +25,7 @@ export const MID_SCORE_PHRASES = [
 export const LOW_SCORE_PHRASES = [
   "Gonna be tough to get this to dry",
   "You'll be fighting moisture on this one",
-  "Humidity's gonna hang around — tough to finish drying",
+  "Humidity's gonna hang around, tough to finish drying",
   "This one's a gamble in these conditions",
   "Risk is stacking up here"
 ];
@@ -34,7 +34,7 @@ export const BAD_SCORE_PHRASES = [
   "Nothing to gain right now",
   "You'd be fighting the weather all the way",
   "Fields need time, so sit tight",
-  "This one's not ready yet — let it dry out",
+  "This one's not ready yet, let it dry out",
   "Let this pass"
 ];
 
@@ -94,7 +94,7 @@ export function getTimePressure(score: number, dryingHours: number): TimePressur
 export function getTimePressureLabel(pressure: TimePressure): string {
   switch (pressure) {
     case "short":
-      return "Short window — don't wait";
+      return "Short window. Don't wait";
     case "moderate":
       return "Narrow drying window";
     default:

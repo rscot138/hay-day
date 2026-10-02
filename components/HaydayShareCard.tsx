@@ -102,13 +102,13 @@ export default function HaydayShareCard({
   const makePng = useCallback(async () => {
     const node = cardRef.current;
     if (!node) return null;
-    return toPng(node, { pixelRatio: 2, width: 1080, height: 1080 });
+    return toPng(node, { pixelRatio: 2, width: 1080, height: 1200 });
   }, []);
 
   const makeBlob = useCallback(async () => {
     const node = cardRef.current;
     if (!node) return null;
-    return toBlob(node, { pixelRatio: 2, width: 1080, height: 1080 });
+    return toBlob(node, { pixelRatio: 2, width: 1080, height: 1200 });
   }, []);
 
   const handleDownload = async () => {
@@ -186,7 +186,7 @@ export default function HaydayShareCard({
 
         <div ref={previewWrapRef} className="relative aspect-square w-full overflow-hidden rounded-xl shadow-lift">
           <div className="absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${scale})` }}>
-            <div ref={cardRef} className="h-[1080px] w-[1080px]">
+            <div ref={cardRef} className="h-[1200px] w-[1080px]">
               <HaydayShareCardCanvas
                 score={score}
                 verdict={verdict}
@@ -282,7 +282,7 @@ function HaydayShareCardCanvas({
   return (
     <div
       className={cn(
-        "relative flex h-[1080px] w-[1080px] flex-col items-center overflow-hidden px-[76px] py-[46px]",
+        "relative flex h-[1200px] w-[1080px] flex-col items-center overflow-hidden px-[76px] py-[46px]",
         tone.gradient,
         tone.text
       )}
