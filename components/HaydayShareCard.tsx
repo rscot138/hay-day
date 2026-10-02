@@ -293,35 +293,35 @@ function HaydayShareCardCanvas({
       />
 
       <div className="relative flex w-full items-start justify-between">
-        <div className="flex items-center gap-4">
-          <Wheat className="h-[52px] w-[52px]" strokeWidth={2} />
-          <span className="text-[56px] font-black leading-none tracking-tight">Hay Days</span>
+        <div className="flex items-center gap-3">
+          <Wheat className="h-[44px] w-[44px]" strokeWidth={2} />
+          <span className="text-[48px] font-black leading-none tracking-tight">Hay Days</span>
         </div>
-        <span className={cn("pt-2 text-[34px] font-semibold", tone.sub)}>{date}</span>
+        <span className={cn("pt-2 text-[30px] font-semibold", tone.sub)}>{date}</span>
       </div>
 
       {locationName ? (
-        <span className={cn("relative mt-4 mb-6 flex max-w-full items-center gap-2.5", tone.sub)}>
-          <MapPin className="h-[30px] w-[30px] shrink-0" strokeWidth={2} />
-          <span className="max-w-full truncate text-[34px] font-medium leading-tight">{locationName}</span>
+        <span className={cn("relative mt-2 mb-4 flex max-w-full items-center gap-2.5", tone.sub)}>
+          <MapPin className="h-[28px] w-[28px] shrink-0" strokeWidth={2} />
+          <span className="max-w-full truncate text-[30px] font-medium leading-tight">{locationName}</span>
         </span>
       ) : null}
 
-      <div className="relative mt-auto flex flex-col items-center">
-        <span className={cn("text-[28px] font-bold uppercase tracking-[0.35em]", tone.sub)}>
+      <div className="relative flex flex-col items-center">
+        <span className={cn("text-[6px] font-bold uppercase tracking-[0.35em]", tone.sub)}>
           Will it dry?
         </span>
-        <h2 className="mt-5 text-center text-[104px] font-black leading-none tracking-tight">{verdict}</h2>
+        <h2 className="mt-0.5 text-center text-[8px] font-black leading-none tracking-tight">{verdict}</h2>
 
         {reason ? (
-          <p className={cn("mt-5 max-w-[820px] text-center text-[26px] font-semibold leading-snug", tone.sub)}>
+          <p className={cn("mt-0.5 max-w-[820px] text-center text-[4px] font-semibold leading-snug", tone.sub)}>
             {reason}
           </p>
         ) : null}
 
-        <div className="relative mt-8 flex flex-col items-center">
+        <div className="relative mt-0.5 flex flex-col items-center">
           <div className="relative">
-            <svg width="220" height="220" viewBox="0 0 220 220" className="-rotate-90">
+            <svg width="80" height="80" viewBox="0 0 220 220" className="-rotate-90">
               <circle cx="110" cy="110" r={radius} fill="none" strokeWidth="14" className={tone.track} />
               <circle
                 cx="110"
@@ -335,13 +335,13 @@ function HaydayShareCardCanvas({
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[88px] font-black leading-none tracking-tight">{score}</span>
+              <span className="text-[20px] font-black leading-none tracking-tight">{score}</span>
             </div>
           </div>
-          <div className="mt-3 flex flex-col items-center gap-1">
-            <span className={cn("text-[22px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
+          <div className="mt-0.5 flex flex-col items-center gap-0.5">
+            <span className={cn("text-[1px] font-bold uppercase tracking-[0.3em]", tone.sub)}>Score</span>
             <span className={cn(
-              "text-[28px] font-black uppercase tracking-wider",
+              "text-[6px] font-black uppercase tracking-wider",
               dryingConfidence === "Dries Easy" && "text-green-300",
               dryingConfidence === "Watch It" && "text-yellow-300",
               dryingConfidence === "Tough Dry" && "text-red-300"
@@ -351,12 +351,12 @@ function HaydayShareCardCanvas({
           </div>
         </div>
 
-        <p className={cn("mt-5 max-w-[840px] text-center text-[42px] font-semibold italic leading-snug", tone.sub)}>
+        <p className={cn("mt-0.5 max-w-[840px] text-center text-[12px] font-semibold italic leading-snug", tone.sub)}>
           {phrase}
         </p>
 
         {pressureLabel ? (
-          <p className={cn("mt-3 text-[28px] font-bold uppercase tracking-wider", 
+          <p className={cn("mt-0.5 text-[2px] font-bold uppercase tracking-wider", 
             timePressure === "short" && "text-red-300",
             timePressure === "moderate" && "text-yellow-300"
           )}>
@@ -365,36 +365,36 @@ function HaydayShareCardCanvas({
         ) : null}
       </div>
 
-      <div className="relative mt-auto flex w-full flex-col items-center gap-3">
+      <div className="relative mt-auto flex w-full flex-col items-center gap-2">
         {hasWindow ? (
-          <span className={cn("text-[26px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
+          <span className={cn("text-[24px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
             Recommended Timeline:
           </span>
         ) : null}
-        <div className={cn("flex items-center gap-6", !hasWindow && "w-full")}>
-          <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip, !hasWindow && "flex-1 justify-center")}>
-            <GrassCut className={cn("h-[68px] w-[68px]", !hasWindow && "h-[84px] w-[84px]")} />
+        <div className={cn("flex items-center gap-4", !hasWindow && "w-full")}>
+          <div className={cn("flex items-center gap-3 rounded-2xl px-5 py-2", tone.chip, !hasWindow && "flex-1 justify-center")}>
+            <GrassCut className={cn("h-[56px] w-[56px]", !hasWindow && "h-[72px] w-[72px]")} />
             <div>
-              <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
-              <span className="block text-[38px] font-black leading-none tracking-tight">{cutTime}</span>
+              <span className={cn("block text-[22px] font-bold uppercase tracking-wider", tone.sub)}>Cut</span>
+              <span className="block text-[34px] font-black leading-none tracking-tight">{cutTime}</span>
             </div>
           </div>
           {hasWindow ? (
-            <div className={cn("flex items-center gap-4 rounded-2xl px-6 py-2.5", tone.chip)}>
-              <RoundBale className="h-[68px] w-[68px]" />
+            <div className={cn("flex items-center gap-3 rounded-2xl px-5 py-2", tone.chip)}>
+              <RoundBale className="h-[56px] w-[56px]" />
               <div>
-                <span className={cn("block text-[24px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
-                <span className="block text-[38px] font-black leading-none tracking-tight">{baleTime}</span>
+                <span className={cn("block text-[22px] font-bold uppercase tracking-wider", tone.sub)}>Bale</span>
+                <span className="block text-[34px] font-black leading-none tracking-tight">{baleTime}</span>
               </div>
             </div>
           ) : null}
         </div>
-        <span className={cn("text-[26px] font-medium", tone.sub)}>Evaluated against real drying conditions</span>
+        <span className={cn("text-[22px] font-medium", tone.sub)}>Evaluated against real drying conditions</span>
         <a
           href="https://www.HayDays.app"
           target="_blank"
           rel="noreferrer"
-          className={cn("text-[24px] font-semibold underline decoration-1 underline-offset-4", tone.sub)}
+          className={cn("text-[22px] font-semibold underline decoration-1 underline-offset-4", tone.sub)}
         >
           Check your field at www.HayDays.app
         </a>
