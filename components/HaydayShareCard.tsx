@@ -365,7 +365,21 @@ function HaydayShareCardCanvas({
         ) : null}
       </div>
 
-      <div className="relative mt-auto flex w-full flex-col items-center gap-2">
+      <div className="relative mt-auto flex w-full flex-col items-center gap-3">
+        <a
+          href="https://www.haydays.app"
+          target="_blank"
+          rel="noreferrer"
+          className="flex flex-col items-center gap-1"
+        >
+          <span className={cn("text-[20px] font-bold uppercase tracking-[0.3em]", tone.sub)}>
+            Check your field at
+          </span>
+          <span className="text-[52px] font-black leading-none tracking-tight underline decoration-4 underline-offset-8">
+            www.haydays.app
+          </span>
+        </a>
+
         {hasWindow ? (
           <span className={cn("text-[24px] font-bold uppercase tracking-[0.25em]", tone.sub)}>
             Recommended Timeline:
@@ -390,14 +404,6 @@ function HaydayShareCardCanvas({
           ) : null}
         </div>
         <span className={cn("text-[22px] font-medium", tone.sub)}>Evaluated against real drying conditions</span>
-        <a
-          href="https://www.HayDays.app"
-          target="_blank"
-          rel="noreferrer"
-          className={cn("text-[22px] font-semibold underline decoration-1 underline-offset-4", tone.sub)}
-        >
-          Check your field at www.HayDays.app
-        </a>
       </div>
     </div>
   );
