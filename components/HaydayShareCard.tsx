@@ -85,30 +85,37 @@ export default function HaydayShareCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.4);
+  const [previewHeight, setPreviewHeight] = useState(400);
   const [busy, setBusy] = useState<null | "download" | "copy" | "share">(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     const wrap = previewWrapRef.current;
-    if (!wrap) return;
-    const update = () => setScale(wrap.clientWidth / 1080);
+    const node = cardRef.current;
+    if (!wrap || !node) return;
+    const update = () => {
+      const s = wrap.clientWidth / 1080;
+      setScale(s);
+      setPreviewHeight(node.offsetHeight * s);
+    };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(wrap);
+    observer.observe(node);
     return () => observer.disconnect();
   }, [open]);
 
   const makePng = useCallback(async () => {
     const node = cardRef.current;
     if (!node) return null;
-    return toPng(node, { pixelRatio: 2, width: 1080, height: 1200 });
+    return toPng(node, { pixelRatio: 2 });
   }, []);
 
   const makeBlob = useCallback(async () => {
     const node = cardRef.current;
     if (!node) return null;
-    return toBlob(node, { pixelRatio: 2, width: 1080, height: 1200 });
+    return toBlob(node, { pixelRatio: 2 });
   }, []);
 
   const handleDownload = async () => {
@@ -184,9 +191,13 @@ export default function HaydayShareCard({
           </button>
         </div>
 
-        <div ref={previewWrapRef} className="relative aspect-square w-full overflow-hidden rounded-xl shadow-lift">
+        <div
+          ref={previewWrapRef}
+          className="relative w-full overflow-hidden rounded-xl shadow-lift"
+          style={{ height: previewHeight, maxHeight: "72vh" }}
+        >
           <div className="absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${scale})` }}>
-            <div ref={cardRef} className="h-[1200px] w-[1080px]">
+            <div ref={cardRef} className="w-[1080px]">
               <HaydayShareCardCanvas
                 score={score}
                 verdict={verdict}
@@ -282,7 +293,7 @@ function HaydayShareCardCanvas({
   return (
     <div
       className={cn(
-        "relative flex h-[1200px] w-[1080px] flex-col items-center overflow-hidden px-[76px] py-[46px]",
+        "relative flex min-h-[1000px] w-[1080px] flex-col items-center overflow-hidden px-[76px] py-[46px]",
         tone.gradient,
         tone.text
       )}
